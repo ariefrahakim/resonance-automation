@@ -1,0 +1,112 @@
+name: Resonance Automation Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: 'Test suite to run: testng | api-testng | web-testng'
+        required: false
+        default: 'testng'
+  schedule:
+    - cron: '0 23 * * *'
+
+jobs:
+  api-tests:
+    name: API Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Grant execute permission to gradlew
+        run: chmod +x gradlew
+
+      - name: Run API tests
+        run: ./gradlew clean test -Dsuite=api-testng
+
+      - name: Upload API test reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: api-test-reports-${{ github.run_number }}
+          path: build/reports/tests/
+          retention-days: 30
+
+  web-tests:
+    name: Web Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Install Google Chrome
+        run: |
+          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+          sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Grant execute permission to gradlew
+        run: chmod +x gradlew
+
+      - name: Run Web tests (headless)
+        run: ./gradlew clean test -Dsuite=web-testng
+
+      - name: Upload Web test reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: web-test-reports-${{ github.run_number }}
+          path: build/reports/tests/
+          retention-days: 30
+
+  full-suite:
+    name: Full Test Suite (Manual Trigger)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Install Google Chrome
+        run: |
+          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+          sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Grant execute permission to gradlew
+        run: chmod +x gradlew
+
+      - name: Run selected suite
+        run: ./gradlew clean test -Dsuite=${{ github.event.inputs.suite || 'testng' }}
+
+      - name: Upload full suite reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: full-test-reports-${{ github.run_number }}
+          path: build/reports/tests/
+          retention-days: 30

@@ -1,0 +1,925 @@
+{
+  "info": {
+    "_postman_id": "resonance-automation-collection",
+    "name": "Resonance API Collection",
+    "description": "Koleksi pengujian API untuk aplikasi Resonance (https://resonance.dibimbing.id).\nMencakup endpoint: Auth, Tiket, Komentar, Progres, Vote, dan Utilitas.\n\nCara penggunaan:\n1. Import collection ini ke Postman\n2. Set environment variable: baseUrl, token\n3. Jalankan request Auth > Login terlebih dahulu untuk mendapatkan token\n4. Token otomatis disimpan via Test script",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://resonance.dibimbing.id",
+      "type": "string",
+      "description": "Base URL aplikasi Resonance"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string",
+      "description": "JWT Token dari hasil login"
+    },
+    {
+      "key": "ticketId",
+      "value": "",
+      "type": "string",
+      "description": "ID tiket yang dibuat, dipakai oleh request lain"
+    },
+    {
+      "key": "commentId",
+      "value": "",
+      "type": "string",
+      "description": "ID komentar yang dibuat"
+    },
+    {
+      "key": "progressionId",
+      "value": "",
+      "type": "string",
+      "description": "ID progres yang dibuat"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Endpoint autentikasi pengguna",
+      "item": [
+        {
+          "name": "Login - Sukses",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Verifikasi status code 200",
+                  "pm.test('Status code 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "// Verifikasi token ada di respons",
+                  "pm.test('Token dikembalikan', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.token).to.be.a('string').and.not.empty;",
+                  "});",
+                  "",
+                  "// Simpan token ke collection variable untuk digunakan request berikutnya",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('token', json.token);",
+                  "console.log('Token berhasil disimpan:', json.token.substring(0, 20) + '...');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usernameOrEmail\": \"user1\",\n  \"password\": \"password\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rest/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rest", "login"]
+            },
+            "description": "Login dengan username dan password. Token JWT disimpan otomatis ke variable."
+          }
+        },
+        {
+          "name": "Login - Kredensial Tidak Valid",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Login dengan kredensial salah harus gagal (bukan 200)",
+                  "pm.test('Status code bukan 200 untuk kredensial tidak valid', function () {",
+                  "    pm.expect(pm.response.code).to.not.equal(200);",
+                  "});",
+                  "",
+                  "pm.test('Response berisi pesan error', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('message');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usernameOrEmail\": \"user_tidak_ada@test.com\",\n  \"password\": \"passwordsalah\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rest/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rest", "login"]
+            },
+            "description": "Skenario negatif: login dengan email yang tidak terdaftar."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tickets",
+      "description": "Endpoint manajemen tiket",
+      "item": [
+        {
+          "name": "Get Active Tickets",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Respons berupa array tiket', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.be.an('array');",
+                  "});",
+                  "",
+                  "console.log('Jumlah tiket aktif:', pm.response.json().length);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/rest/activeTickets?date={{$isoTimestamp}}&order=NEWEST&search=",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rest", "activeTickets"],
+              "query": [
+                { "key": "date", "value": "{{$isoTimestamp}}", "description": "Tanggal saat ini dalam format ISO" },
+                { "key": "order", "value": "NEWEST", "description": "Urutan: VOTE | NEWEST | SOLVE" },
+                { "key": "search", "value": "", "description": "Kata kunci pencarian (opsional)" }
+              ]
+            },
+            "description": "Mengambil daftar tiket aktif (belum selesai atau selesai dalam 48 jam terakhir)."
+          }
+        },
+        {
+          "name": "Count Active Tickets",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Respons berupa angka', function () {",
+                  "    pm.expect(pm.response.json()).to.be.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/rest/countActiveTickets?date={{$isoTimestamp}}&search=",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rest", "countActiveTickets"],
+              "query": [
+                { "key": "date", "value": "{{$isoTimestamp}}" },
+                { "key": "search", "value": "" }
+              ]
+            },
+            "description": "Menghitung jumlah tiket aktif."
+          }
+        },
+        {
+          "name": "Get My Tickets",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Respons berupa array', function () {",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});",
+                  "",
+                  "console.log('Jumlah tiket saya:', pm.response.json().length);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/rest/myTickets?limit=5&page=0&orderColumn=createdAt&orderBy=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rest", "myTickets"],
+              "query": [
+                { "key": "limit", "value": "5", "description": "Jumlah tiket per halaman" },
+                { "key": "page", "value": "0", "description": "Nomor halaman (dimulai dari 0)" },
+                { "key": "orderColumn", "value": "createdAt", "description": "Kolom urutan: createdAt | solvedAt" },
+                { "key": "orderBy", "value": "desc", "description": "Arah urutan: asc | desc" }
+              ]
+            },
+            "description": "Mengambil tiket milik pengguna yang sedang login."
+          }
+        },
+        {
+          "name": "Get Ticket by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('ID tiket sesuai', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.id).to.equal(pm.collectionVariables.get('ticketId'));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/rest/ticketById?id={{ticketId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rest", "ticketById"],
+              "query": [
+                { "key": "id", "value": "{{ticketId}}", "description": "ID tiket yang akan diambil" }
+              ]
+            },
+            "description": "Mengambil detail tiket berdasarkan ID."
+          }
+        },
+        {
+          "name": "Create Ticket - Publik",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('ID tiket dikembalikan', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.id).to.be.a('string').and.not.empty;",
+                  "});",
+                  "",
+                  "pm.test('Tiket bersifat publik', function () {",
+                  "    pm.expect(pm.response.json().isPublic).to.be.true;",
+                  "});",
+                  "",
+                  "// Simpan ID tiket untuk digunakan request selanjutnya",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('ticketId', json.id);",
+                  "console.log('Tiket publik dibuat, ID:', json.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Tiket Otomatis {{$randomWords}}\",\n  \"description\": \"Tiket ini dibuat melalui Postman automation test\",\n  \"attachment\": null,\n  \"isPublic\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rest/createTicket",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rest", "createTicket"]
+            },
+            "description": "Membuat tiket baru yang bersifat publik."
+          }
+        },
+        {
+          "name": "Create Ticket - Private",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Tiket bersifat private', function () {",
+                  "    pm.expect(pm.response.json().isPublic).to.be.false;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Tiket Private {{$randomWords}}\",\n  \"description\": \"Ini adalah tiket private yang hanya bisa dilihat oleh pemilik\",\n  \"attachment\": null,\n  \"isPublic\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rest/createTicket",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rest", "createTicket"]
+            },
+            "description": "Membuat tiket baru yang bersifat private."
+          }
+        },
+        {
+          "name": "Update Ticket Status - Solved",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('solvedAt diisi', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.solvedAt).to.not.be.null;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ticketId\": \"{{ticketId}}\",\n  \"solvedAt\": \"{{$isoTimestamp}}\",\n  \"sendEmail\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rest/updateStatusTicket",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rest", "updateStatusTicket"]
+            },
+            "description": "Menandai tiket sebagai sudah diselesaikan."
+          }
+        },
+        {
+          "name": "Update Ticket Status - Unsolved",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('solvedAt menjadi null', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.solvedAt).to.be.null;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ticketId\": \"{{ticketId}}\",\n  \"solvedAt\": null,\n  \"sendEmail\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rest/updateStatusTicket",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rest", "updateStatusTicket"]
+            },
+            "description": "Mengembalikan status tiket menjadi belum diselesaikan."
+          }
+        },
+        {
+          "name": "Delete Ticket",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Penghapusan berhasil', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/rest/deleteTicket?ticketId={{ticketId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rest", "deleteTicket"],
+              "query": [
+                { "key": "ticketId", "value": "{{ticketId}}", "description": "ID tiket yang akan dihapus" }
+              ]
+            },
+            "description": "Menghapus tiket berdasarkan ID. Hanya bisa dilakukan oleh pemilik tiket atau admin."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comments",
+      "description": "Endpoint komentar pada tiket",
+      "item": [
+        {
+          "name": "Get Comments by Ticket ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Respons berupa array komentar', function () {",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});",
+                  "",
+                  "console.log('Jumlah komentar:', pm.response.json().length);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/rest/commentsByTicketId?ticketId={{ticketId}}&limit=10&page=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rest", "commentsByTicketId"],
+              "query": [
+                { "key": "ticketId", "value": "{{ticketId}}" },
+                { "key": "limit", "value": "10" },
+                { "key": "page", "value": "0" }
+              ]
+            },
+            "description": "Mengambil komentar pada tiket dengan paginasi."
+          }
+        },
+        {
+          "name": "Create Comment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('ID komentar dikembalikan', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.id).to.be.a('string').and.not.empty;",
+                  "});",
+                  "",
+                  "// Simpan ID komentar",
+                  "pm.collectionVariables.set('commentId', pm.response.json().id);",
+                  "console.log('Komentar dibuat, ID:', pm.response.json().id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ticketId\": \"{{ticketId}}\",\n  \"body\": \"Komentar automation test - {{$randomWords}}\",\n  \"attachment\": \"\",\n  \"sendEmail\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rest/createComment",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rest", "createComment"]
+            },
+            "description": "Menambahkan komentar pada tiket."
+          }
+        },
+        {
+          "name": "Update Comment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Isi komentar telah diperbarui', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.body).to.include('Komentar diperbarui');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{commentId}}\",\n  \"body\": \"Komentar diperbarui via automation - {{$randomWords}}\",\n  \"attachment\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rest/updateComment",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rest", "updateComment"]
+            },
+            "description": "Memperbarui isi komentar berdasarkan ID."
+          }
+        },
+        {
+          "name": "Delete Comment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Penghapusan komentar berhasil', function () {",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/rest/deleteComment?id={{commentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rest", "deleteComment"],
+              "query": [
+                { "key": "id", "value": "{{commentId}}" }
+              ]
+            },
+            "description": "Menghapus komentar berdasarkan ID."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Progressions",
+      "description": "Endpoint progres penyelesaian tiket",
+      "item": [
+        {
+          "name": "Get Progressions by Ticket ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Respons berupa array progres', function () {",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/rest/progressionsByTicketId?ticketId={{ticketId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rest", "progressionsByTicketId"],
+              "query": [
+                { "key": "ticketId", "value": "{{ticketId}}" }
+              ]
+            },
+            "description": "Mengambil daftar progres berdasarkan ID tiket."
+          }
+        },
+        {
+          "name": "Create Progression",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('ID progres dikembalikan', function () {",
+                  "    pm.expect(pm.response.json().id).to.be.a('string').and.not.empty;",
+                  "});",
+                  "",
+                  "// Simpan ID progres",
+                  "pm.collectionVariables.set('progressionId', pm.response.json().id);",
+                  "console.log('Progres dibuat, ID:', pm.response.json().id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ticketId\": \"{{ticketId}}\",\n  \"title\": \"Update Progres - {{$randomWords}}\",\n  \"description\": \"Tim sedang menangani masalah ini\",\n  \"attachment\": \"\",\n  \"expectedDone\": \"{{$isoTimestamp}}\",\n  \"sendEmail\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rest/createProgression",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rest", "createProgression"]
+            },
+            "description": "Membuat entri progres baru untuk tiket."
+          }
+        },
+        {
+          "name": "Update Progression",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Judul progres diperbarui', function () {",
+                  "    pm.expect(pm.response.json().title).to.include('Diperbarui');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{progressionId}}\",\n  \"title\": \"Diperbarui - {{$randomWords}}\",\n  \"description\": \"Deskripsi progres telah diperbarui\",\n  \"attachment\": \"\",\n  \"expectedDone\": \"{{$isoTimestamp}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rest/updateProgression",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rest", "updateProgression"]
+            },
+            "description": "Memperbarui data progres berdasarkan ID."
+          }
+        },
+        {
+          "name": "Delete Progression",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Penghapusan progres berhasil', function () {",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/rest/deleteProgression?id={{progressionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rest", "deleteProgression"],
+              "query": [
+                { "key": "id", "value": "{{progressionId}}" }
+              ]
+            },
+            "description": "Menghapus entri progres berdasarkan ID."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Votes",
+      "description": "Endpoint voting tiket",
+      "item": [
+        {
+          "name": "Check User Vote",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Field hasVoted ada', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('hasVoted');",
+                  "});",
+                  "",
+                  "pm.test('Field voteCount ada', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('voteCount');",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "console.log('Status vote:', json.hasVoted, '| Jumlah vote:', json.voteCount);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/rest/checkUserVote?ticketId={{ticketId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rest", "checkUserVote"],
+              "query": [
+                { "key": "ticketId", "value": "{{ticketId}}" }
+              ]
+            },
+            "description": "Memeriksa apakah user saat ini sudah vote pada tiket tertentu."
+          }
+        },
+        {
+          "name": "Vote / Unvote Ticket",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response berisi hasVoted dan voteCount', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.all.keys('hasVoted', 'voteCount');",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "console.log('Setelah toggle vote - hasVoted:', json.hasVoted, '| voteCount:', json.voteCount);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ticketId\": \"{{ticketId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rest/voteTicket",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rest", "voteTicket"]
+            },
+            "description": "Toggle vote pada tiket. Jika sudah vote maka unvote, jika belum vote maka vote."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Utils",
+      "description": "Endpoint utilitas",
+      "item": [
+        {
+          "name": "Get Server Time",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Field data (waktu server) ada', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('data');",
+                  "});",
+                  "",
+                  "console.log('Waktu server:', pm.response.json().data);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/rest/getServerTime",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rest", "getServerTime"]
+            },
+            "description": "Mengambil waktu server saat ini."
+          }
+        }
+      ]
+    }
+  ]
+}

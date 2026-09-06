@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Resonance Web Test Suite" verbose="1" parallel="false">
+
+    <test name="Login Positive Tests">
+        <classes>
+            <class name="tests.web.auth.LoginWebTest"/>
+        </classes>
+    </test>
+
+    <test name="Login Negative Tests">
+        <classes>
+            <class name="tests.web.auth.NegativeLoginWebTest"/>
+        </classes>
+    </test>
+
+    <test name="View Ticket Tests">
+        <classes>
+            <class name="tests.web.ticket.ViewTicketWebTest"/>
+        </classes>
+    </test>
+
+    <test name="Create Ticket Tests">
+        <classes>
+            <class name="tests.web.ticket.CreateTicketWebTest"/>
+        </classes>
+    </test>
+
+    <test name="Ticket Negative Tests">
+        <classes>
+            <class name="tests.web.ticket.NegativeTicketWebTest"/>
+        </classes>
+    </test>
+
+    <test name="History Tests">
+        <classes>
+            <class name="tests.web.history.HistoryWebTest"/>
+        </classes>
+    </test>
+
+</suite>
