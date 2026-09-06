@@ -27,7 +27,7 @@ public class TicketDetailPage extends BasePage {
 
     public void addComment(String comment) {
         type(TicketDetailPageLocators.COMMENT_INPUT, comment);
-        click(TicketDetailPageLocators.SUBMIT_COMMENT_BUTTON);
+        click(TicketDetailPageLocators.SUBMIT_COMMENT);
     }
 
     public boolean isCommentVisible(String commentText) {
@@ -39,6 +39,6 @@ public class TicketDetailPage extends BasePage {
     }
 
     public void clickDelete() {
-        click(TicketDetailPageLocators.DELETE_TICKET_BUTTON);
+        click(TicketDetailPageLocators.DELETE_BUTTON);
     }
 }

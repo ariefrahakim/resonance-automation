@@ -28,19 +28,36 @@ public class HomePage extends BasePage {
         return driver.findElements(HomePageLocators.TICKET_LIST);
     }
 
+    public int getTicketCount() {
+        return getTicketList().size();
+    }
+
+    /** Klik tombol navbar hamburger dulu, baru klik History. */
     public void clickHistoryNav() {
+        click(HomePageLocators.NAV_TOGGLE);
         click(HomePageLocators.NAV_HISTORY);
     }
 
+    /** Klik tombol navbar hamburger dulu, baru klik Logout. */
     public void clickLogout() {
+        click(HomePageLocators.NAV_TOGGLE);
         click(HomePageLocators.NAV_LOGOUT);
     }
 
-    public boolean isEmptyState() {
-        return isDisplayed(HomePageLocators.EMPTY_STATE);
+    public void filterByVote() {
+        click(HomePageLocators.FILTER_VOTE);
+    }
+
+    public void filterByNewest() {
+        click(HomePageLocators.FILTER_NEWEST);
     }
 
     public boolean isTicketVisible(String title) {
         return driver.getPageSource().contains(title);
+    }
+
+    public boolean isOnHomePage() {
+        String url = driver.getCurrentUrl();
+        return !url.contains("/login") && !url.contains("/new") && !url.contains("/history");
     }
 }

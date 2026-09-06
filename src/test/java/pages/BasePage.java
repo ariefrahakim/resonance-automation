@@ -41,7 +41,7 @@ public abstract class BasePage {
         return waitForElement(locator).getText();
     }
 
-    protected boolean isDisplayed(By locator) {
+    public boolean isDisplayed(By locator) {
         try {
             return driver.findElement(locator).isDisplayed();
         } catch (Exception e) {

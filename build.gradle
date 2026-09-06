@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'io.qameta.allure' version '2.11.2'
 }
 
 group = 'org.resonance'
@@ -9,23 +10,82 @@ repositories {
     mavenCentral()
 }
 
+def allureVersion = '2.27.0'
+
 dependencies {
+    // TestNG (API tests)
     testImplementation 'org.testng:testng:7.10.2'
     testImplementation 'org.hamcrest:hamcrest:2.2'
     testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.18.0'
     testImplementation 'io.rest-assured:rest-assured:5.3.1'
+
+    // Selenium + WebDriverManager (Web tests)
     testImplementation 'org.seleniumhq.selenium:selenium-java:4.23.0'
     testImplementation 'io.github.bonigarcia:webdrivermanager:5.9.1'
+
+    // Cucumber (Gherkin BDD for web tests)
+    testImplementation 'io.cucumber:cucumber-java:7.18.0'
+    testImplementation 'io.cucumber:cucumber-testng:7.18.0'
+    testImplementation 'io.cucumber:cucumber-picocontainer:7.18.0'
+
+    // Allure reporting
+    testImplementation "io.qameta.allure:allure-testng:${allureVersion}"
+    testImplementation "io.qameta.allure:allure-rest-assured:${allureVersion}"
+    testImplementation "io.qameta.allure:allure-cucumber7-jvm:${allureVersion}"
+
+    // Shared
     implementation 'org.json:json:20230227'
+
+    // Apache POI — Excel test case document generator
+    implementation 'org.apache.poi:poi:5.2.3'
+    implementation 'org.apache.poi:poi-ooxml:5.2.3'
 }
 
+allure {
+    version = allureVersion
+    autoconfigure = true
+}
+
+// API-only suite (TestNG)
+task apiTest(type: Test) {
+    useTestNG {
+        suites 'src/test/java/runner/api-testng.xml'
+    }
+    testLogging {
+        showStandardStreams = true
+        events 'passed', 'skipped', 'failed'
+    }
+    reports.html.outputLocation = file('build/reports/tests/api')
+}
+
+// Web suite via Cucumber runner (TestNG)
+task webTest(type: Test) {
+    useTestNG {
+        suites 'src/test/java/runner/web-testng.xml'
+    }
+    testLogging {
+        showStandardStreams = true
+        events 'passed', 'skipped', 'failed'
+    }
+    reports.html.outputLocation = file('build/reports/tests/web')
+}
+
+// Generate Excel test case document
+task generateTestCaseDoc(type: JavaExec) {
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'utils.TestCaseDocGenerator'
+    description = 'Generate docs/test_cases.xlsx from test case data'
+}
+
+// Default task — select suite via -Dsuite=
 test {
     useTestNG {
-        def suiteName = System.getProperty("suite", "testng")
+        def suiteName = System.getProperty('suite', 'testng')
         suites "src/test/java/runner/${suiteName}.xml"
     }
     testLogging {
         showStandardStreams = true
-        events "passed", "skipped", "failed"
+        events 'passed', 'skipped', 'failed'
     }
+    systemProperty 'allure.results.directory', 'build/allure-results'
 }

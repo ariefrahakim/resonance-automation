@@ -2,6 +2,7 @@ package pages;
 
 import locators.LoginPageLocators;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 
 public class LoginPage extends BasePage {
 
@@ -32,8 +33,22 @@ public class LoginPage extends BasePage {
         clickLoginButton();
     }
 
-    public boolean isErrorDisplayed() {
-        return isDisplayed(LoginPageLocators.ERROR_MESSAGE);
+    /** Menunggu toast error Chakra UI muncul, lalu kembalikan teksnya. */
+    public String getErrorToastText() {
+        try {
+            wait.until(ExpectedConditions.visibilityOfElementLocated(LoginPageLocators.ERROR_TOAST));
+            return driver.findElement(LoginPageLocators.ERROR_TOAST).getText();
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    public boolean isErrorToastDisplayed() {
+        return !getErrorToastText().isEmpty();
+    }
+
+    public boolean isOnLoginPage() {
+        return driver.getCurrentUrl().contains("/login");
     }
 
     public void clickRegisterLink() {
@@ -41,6 +56,6 @@ public class LoginPage extends BasePage {
     }
 
     public void clickForgotPasswordLink() {
-        click(LoginPageLocators.FORGOT_PASSWORD_LINK);
+        click(LoginPageLocators.FORGOT_PWD_LINK);
     }
 }

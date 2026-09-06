@@ -1,78 +1,78 @@
 # Resonance Automation
 
-Framework otomasi testing gabungan API dan Web untuk aplikasi [Resonance](https://resonance.dibimbing.id), dibangun dengan Java, TestNG, RestAssured, dan Selenium WebDriver menggunakan pola Page Object Model (POM).
+Framework otomasi testing gabungan **API** (RestAssured) dan **Web** (Selenium + Cucumber/Gherkin) untuk aplikasi [Resonance](https://resonance.dibimbing.id).
+
+Tech stack: Java 17 · Gradle · TestNG · RestAssured · Selenium 4 · Cucumber 7 · Allure 2
+
+---
 
 ## Struktur Proyek
 
 ```
 resonance-automation/
-├── .github/workflows/tests.yml         # CI/CD pipeline (GitHub Actions)
+├── .github/workflows/tests.yml         # CI/CD — 3 job: API, Web, Allure Report
+├── docs/
+│   └── test_cases.xlsx                 # Dokumen test case (auto-generated)
 ├── postman/
-│   └── Resonance_API.postman_collection.json  # Koleksi Postman
+│   └── Resonance_API.postman_collection.json
 ├── src/
 │   ├── main/java/
-│   │   ├── body/                       # Request body builder (API)
-│   │   │   ├── auth/                   # - LoginBody
-│   │   │   ├── comment/                # - CreateCommentBody, UpdateCommentBody
-│   │   │   ├── progression/            # - CreateProgressionBody, UpdateProgressionBody
-│   │   │   ├── ticket/                 # - CreateTicketBody, UpdateTicketStatusBody
-│   │   │   └── vote/                   # - VoteBody
-│   │   ├── locators/                   # Locator terpusat untuk Web (POM)
-│   │   │   ├── LoginPageLocators.java
-│   │   │   ├── HomePageLocators.java
-│   │   │   ├── NewTicketPageLocators.java
-│   │   │   ├── TicketDetailPageLocators.java
-│   │   │   └── HistoryPageLocators.java
-│   │   ├── pages/                      # Page Object classes (Web)
-│   │   │   ├── BasePage.java
-│   │   │   ├── LoginPage.java
-│   │   │   ├── HomePage.java
-│   │   │   ├── NewTicketPage.java
-│   │   │   ├── TicketDetailPage.java
-│   │   │   └── HistoryPage.java
-│   │   └── utils/                      # Utilitas bersama
-│   │       ├── ConfigReader.java       # - Membaca config.properties
-│   │       ├── DriverManager.java      # - Manajemen WebDriver
-│   │       ├── JsonFileManager.java    # - Baca/tulis JSON (state sharing)
-│   │       └── Utils.java              # - Generator data dinamis
-│   ├── resources/
-│   │   ├── config.properties           # Konfigurasi (URL, kredensial)
-│   │   └── json/                       # File state antar test
-│   │       ├── token.json
-│   │       ├── ticket_id.json
-│   │       ├── comment_id.json
-│   │       └── progression_id.json
+│   │   ├── body/                       # Request body builders (API)
+│   │   │   ├── auth/LoginBody.java
+│   │   │   ├── comment/
+│   │   │   ├── progression/
+│   │   │   ├── ticket/
+│   │   │   └── vote/
+│   │   └── utils/                      # Utilities (ConfigReader, Utils, JsonFileManager)
+│   ├── main/resources/
+│   │   ├── config.properties           # Konfigurasi URL + kredensial
+│   │   └── json/                       # State sharing antar test (token, ID)
 │   └── test/java/
-│       ├── base/
-│       │   ├── BaseApiTest.java         # Setup RestAssured + helper
-│       │   └── BaseWebTest.java         # Setup WebDriver + helper
-│       ├── data/                        # DataProvider untuk data-driven testing
+│       ├── base/BaseApiTest.java        # Setup RestAssured
+│       ├── data/                        # DataProvider untuk data-driven API tests
 │       │   ├── LoginDataProvider.java
 │       │   ├── TicketDataProvider.java
 │       │   ├── CommentDataProvider.java
 │       │   └── ProgressionDataProvider.java
-│       ├── runner/                      # TestNG XML suite files
-│       │   ├── testng.xml              # Suite lengkap (API + Web)
-│       │   ├── api-testng.xml          # Suite API saja
-│       │   └── web-testng.xml          # Suite Web saja
-│       └── tests/
-│           ├── api/                     # Test case API
-│           │   ├── auth/               # - LoginApiTest (data-driven)
-│           │   ├── ticket/             # - Create, Get, UpdateStatus, Delete
-│           │   ├── comment/            # - Create (data-driven), Update, Delete
-│           │   ├── progression/        # - Create (data-driven), Update, Delete
-│           │   └── vote/               # - CheckVote, Vote, Unvote
-│           └── web/                     # Test case Web
-│               ├── auth/               # - LoginWebTest
-│               ├── ticket/             # - CreateTicketWebTest, ViewTicketWebTest
-│               └── history/            # - HistoryWebTest
+│       ├── locators/                    # Locator terpusat (By.id(), By.cssSelector())
+│       │   ├── LoginPageLocators.java
+│       │   ├── HomePageLocators.java
+│       │   ├── NewTicketPageLocators.java
+│       │   ├── TicketDetailPageLocators.java
+│       │   └── HistoryPageLocators.java
+│       ├── pages/                       # Page Object Model
+│       │   ├── BasePage.java
+│       │   ├── LoginPage.java
+│       │   ├── HomePage.java
+│       │   ├── NewTicketPage.java
+│       │   ├── TicketDetailPage.java
+│       │   └── HistoryPage.java
+│       ├── runner/                      # Test suites
+│       │   ├── testng.xml              # Full suite (API only — web pakai Cucumber)
+│       │   ├── api-testng.xml          # API suite
+│       │   ├── web-testng.xml          # Web suite (runs CucumberRunner)
+│       │   └── CucumberRunner.java     # Cucumber/TestNG runner
+│       ├── steps/                       # Cucumber Step Definitions
+│       │   ├── Hooks.java              # Before/After per scenario (WebDriver init/quit)
+│       │   ├── LoginSteps.java
+│       │   ├── TicketSteps.java
+│       │   ├── HistorySteps.java
+│       │   └── CommonSteps.java
+│       ├── tests/api/                   # API Test Cases (TestNG)
+│       │   ├── auth/LoginApiTest.java
+│       │   ├── ticket/  (Create, Get, UpdateStatus, Delete, Negative)
+│       │   ├── comment/ (Create, Update, Delete, Negative)
+│       │   ├── progression/ (Create, Update, Delete, Negative)
+│       │   └── vote/    (Vote, Negative)
+│       └── utils/TestCaseDocGenerator.java  # Generator docs/test_cases.xlsx
+└── test/resources/features/            # Gherkin Feature Files
+    ├── login.feature
+    ├── create_ticket.feature
+    ├── view_ticket.feature
+    └── history.feature
 ```
 
-## Prasyarat
-
-- Java 17+
-- Gradle 8+
-- Google Chrome (untuk web test)
+---
 
 ## Konfigurasi
 
@@ -87,63 +87,132 @@ browser=chrome
 headless=true
 ```
 
+---
+
+## Prasyarat
+
+- Java 17+
+- Gradle 8+
+- Google Chrome (web tests)
+- Allure CLI (opsional, untuk lihat report lokal)
+
+---
+
 ## Menjalankan Test
 
 ```bash
-# Semua test (API + Web)
-./gradlew clean test
-
-# Hanya API test
+# Semua API test
 ./gradlew clean test -Dsuite=api-testng
 
-# Hanya Web test
+# Semua Web test (Cucumber/Gherkin)
 ./gradlew clean test -Dsuite=web-testng
+
+# Full suite
+./gradlew clean test
+
+# Lihat Allure report
+./gradlew allureServe
 ```
 
-## Fitur Utama
+---
 
-### Data-Driven Testing (DataProvider)
-Test utama menggunakan `@DataProvider` TestNG untuk menjalankan skenario berbeda secara otomatis:
+## Arsitektur Web Tests (Gherkin BDD)
 
-| DataProvider | Digunakan Oleh | Skenario |
-|---|---|---|
-| `loginValidData` | `LoginApiTest` | Login dengan berbagai format username |
-| `loginInvalidData` | `LoginApiTest` | Login gagal: email salah, password salah, kosong |
-| `createTicketData` | `CreateTicketTest` | Tiket publik, private, bug report |
-| `activeTicketOrderData` | `GetTicketTest` | Urutan VOTE, NEWEST, SOLVE |
-| `createCommentData` | `CreateCommentTest` | Komentar biasa, status update, referensi |
-| `createProgressionData` | `CreateProgressionTest` | Fase investigasi, pengembangan, QA |
+```
+Feature File (.feature)
+    └── Step Definitions (steps/)
+            └── Page Objects (pages/)
+                    └── Locators (locators/)   ← terpusat, stabil
+                            └── BasePage (pages/BasePage.java)
+```
 
-### State Sharing Antar Test
-Token dan ID disimpan di file JSON dan dibaca oleh test berikutnya:
-- `token.json` → token JWT setelah login
-- `ticket_id.json` → ID tiket yang dibuat
-- `comment_id.json` → ID komentar yang dibuat
-- `progression_id.json` → ID progres yang dibuat
+### Prinsip Pemilihan Locator
 
-### Locator Terpusat (POM)
-Semua selector elemen web dipusatkan di package `locators/`. Jika UI berubah, cukup update satu file locator.
+| Prioritas | Strategi | Contoh |
+|-----------|----------|--------|
+| 1 (paling stabil) | `By.id()` | `By.id("btn-login")` |
+| 2 | `By.name()` | `By.name("username")` |
+| 3 | `By.cssSelector()` berdasarkan atribut struktural | `By.cssSelector("a[href*='/ticket/']")` |
+| 4 | `By.xpath()` untuk relasi parent/child atau teks | `By.xpath("//a[contains(@href,'/ticket/')]//span[1]")` |
+| ❌ Hindari | Class hash Chakra UI | `div.css-n0wfye`, `span.css-1gu0mm2` |
 
-## Koleksi Postman
+---
 
-Import `postman/Resonance_API.postman_collection.json` ke Postman.
+## Feature Files
 
-Fitur koleksi:
-- Token otomatis disimpan setelah login via Test script
-- ID tiket, komentar, progres tersimpan otomatis sebagai collection variable
+| Feature | Skenario | Positif | Negatif |
+|---------|----------|---------|---------|
+| Login | 7 | 2 | 5 |
+| Create Ticket | 4 | 2 | 2 |
+| View Ticket | 5 | 4 | 1 |
+| History | 4 | 3 | 1 |
+
+---
+
+## API Test Coverage
+
+| Modul | Positif | Negatif | Total |
+|-------|---------|---------|-------|
+| Auth | 2 | 6 | 8 |
+| Ticket | 9 | 6 | 15 |
+| Comment | 4 | 4 | 8 |
+| Progression | 4 | 4 | 8 |
+| Vote | 3 | 3 | 6 |
+| **Total** | **22** | **23** | **45** |
+
+---
+
+## Data-Driven Testing
+
+Test API menggunakan `@DataProvider` TestNG:
+
+| DataProvider | Skenario |
+|---|---|
+| `loginValidData` | Login sukses dengan username |
+| `loginInvalidData` | 8 kombinasi data tidak valid (email salah, password salah, kosong, terlalu pendek/panjang) |
+| `createTicketData` | Tiket publik, private, bug report |
+| `activeTicketOrderData` | Order: VOTE, NEWEST, SOLVE |
+| `createCommentData` | 3 variasi isi komentar |
+| `createProgressionData` | 3 fase progres (investigasi, pengembangan, QA) |
+
+---
+
+## Allure Report
+
+Allure terintegrasi untuk TestNG (API) dan Cucumber (Web).
+
+```bash
+# Generate & buka report lokal
+./gradlew allureServe
+
+# Generate report (HTML saja)
+./gradlew allureReport
+```
+
+Pada CI/CD, Allure HTML report di-upload sebagai artifact (`allure-html-report-{run_number}`).
+
+---
+
+## Postman Collection
+
+Import `postman/Resonance_API.postman_collection.json`:
+
+- Token otomatis disimpan setelah login
+- ID tiket/komentar/progres tersimpan otomatis ke collection variable
 - Setiap request memiliki test assertion
-- Deskripsi dalam Bahasa Indonesia
+- Endpoint: Auth, Tickets, Comments, Progressions, Votes, Utils
 
-## Coverage Test
+---
 
-### API
-- **Auth**: Login sukses, login data tidak valid (data-driven)
-- **Tiket**: Buat, ambil (dengan berbagai order), update status, hapus
-- **Komentar**: Buat (data-driven), ambil, update, hapus
-- **Progres**: Buat (data-driven), ambil, update, hapus
-- **Vote**: Cek status, vote, unvote (toggle)
+## Test Case Document
 
-### Web
-- **Login**: Sukses, gagal (kredensial salah)
-- **Tiket**: Navigasi ke /new, buat tiket, lihat daftar
-- **History**: Navigasi ke /history, validasi konten halaman
+Generate dokumen Excel:
+
+```bash
+./gradlew generateTestCaseDoc
+# Output: docs/test_cases.xlsx
+```
+
+File berisi 2 sheet:
+- **API Test Cases** — 40 test case dengan kolom TC ID, Modul, Step, Test Data, Expected Result
+- **Web Test Cases (Gherkin)** — 19 test case dengan format Given/When/Then
