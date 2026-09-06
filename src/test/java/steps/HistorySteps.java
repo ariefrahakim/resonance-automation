@@ -22,12 +22,6 @@ public class HistorySteps {
         sleep(1500);
     }
 
-    @Then("saya berada di halaman riwayat tiket")
-    public void iAmOnHistoryPage() {
-        Assert.assertTrue(historyPage.isOnHistoryPage(),
-                "Seharusnya berada di halaman /history. URL: " + DriverManager.getDriver().getCurrentUrl());
-    }
-
     @Then("halaman riwayat berhasil dimuat")
     public void historyPageLoaded() {
         String url = DriverManager.getDriver().getCurrentUrl();

@@ -49,13 +49,6 @@ public class LoginSteps {
                         + DriverManager.getDriver().getCurrentUrl());
     }
 
-    @Then("saya berada di halaman dashboard")
-    public void iAmOnDashboardPage() {
-        String url = DriverManager.getDriver().getCurrentUrl();
-        Assert.assertFalse(url.contains("/login"),
-                "Harus di halaman dashboard, bukan login. URL: " + url);
-    }
-
     @Then("saya harus melihat pesan error atau tetap di halaman login")
     public void iShouldSeeErrorOrStayOnLogin() {
         boolean onLoginPage = loginPage.isOnLoginPage();

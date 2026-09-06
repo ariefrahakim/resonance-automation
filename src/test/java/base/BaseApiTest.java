@@ -22,9 +22,10 @@ public class BaseApiTest {
 
     protected RequestSpecification authRequest() {
         String token = JsonFileManager.readValue(TOKEN_FILE, "token");
+        // Resonance menggunakan Next-Auth: token dikirim via cookie, bukan Bearer header
         return given()
                 .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + token);
+                .cookie("__Secure-next-auth.session-token", token);
     }
 
     protected RequestSpecification baseRequest() {

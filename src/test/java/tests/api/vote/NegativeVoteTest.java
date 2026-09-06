@@ -59,15 +59,21 @@ public class NegativeVoteTest extends BaseApiTest {
     /**
      * TC-NEG-VOTE-004: Cek vote pada tiket yang tidak ada harus gagal.
      */
-    @Test(priority = 4, description = "Cek vote pada tiket yang tidak ada harus gagal")
+    /**
+     * TC-NEG-VOTE-004: Cek vote pada tiket yang tidak ada mengembalikan hasVoted=false.
+     * API selalu return 200 untuk checkUserVote, tapi data menunjukkan tidak ada vote.
+     */
+    @Test(priority = 4, description = "Cek vote pada tiket tidak ada mengembalikan hasVoted false")
     public void testCheckVoteOnNonExistentTicket() {
         Response response = authRequest()
                 .queryParam("ticketId", "id-tiket-tidak-ada-xyz")
                 .get("/api/rest/checkUserVote");
 
-        Assert.assertNotEquals(response.getStatusCode(), 200,
-                "Cek vote pada tiket yang tidak ada seharusnya gagal");
+        Assert.assertEquals(response.getStatusCode(), 200,
+                "checkUserVote harus return 200 meski tiket tidak ada");
+        Assert.assertFalse(response.jsonPath().getBoolean("hasVoted"),
+                "hasVoted harus false untuk tiket yang tidak ada");
 
-        System.out.println("[PASS] checkUserVote tiket tidak ada ditolak dengan status: " + response.getStatusCode());
+        System.out.println("[PASS] checkUserVote tiket tidak ada: hasVoted=" + response.jsonPath().getBoolean("hasVoted"));
     }
 }

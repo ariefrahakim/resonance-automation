@@ -72,7 +72,15 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "__Secure-next-auth.session-token={{token}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -80,8 +88,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/rest/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "rest", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rest",
+                "login"
+              ]
             },
             "description": "Login dengan username dan password. Token JWT disimpan otomatis ke variable."
           }
@@ -110,7 +124,15 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "__Secure-next-auth.session-token={{token}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -118,8 +140,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/rest/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "rest", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rest",
+                "login"
+              ]
             },
             "description": "Skenario negatif: login dengan email yang tidak terdaftar."
           }
@@ -155,16 +183,38 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "Cookie",
+                "value": "__Secure-next-auth.session-token={{token}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/api/rest/activeTickets?date={{$isoTimestamp}}&order=NEWEST&search=",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "rest", "activeTickets"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rest",
+                "activeTickets"
+              ],
               "query": [
-                { "key": "date", "value": "{{$isoTimestamp}}", "description": "Tanggal saat ini dalam format ISO" },
-                { "key": "order", "value": "NEWEST", "description": "Urutan: VOTE | NEWEST | SOLVE" },
-                { "key": "search", "value": "", "description": "Kata kunci pencarian (opsional)" }
+                {
+                  "key": "date",
+                  "value": "{{$isoTimestamp}}",
+                  "description": "Tanggal saat ini dalam format ISO"
+                },
+                {
+                  "key": "order",
+                  "value": "NEWEST",
+                  "description": "Urutan: VOTE | NEWEST | SOLVE"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Kata kunci pencarian (opsional)"
+                }
               ]
             },
             "description": "Mengambil daftar tiket aktif (belum selesai atau selesai dalam 48 jam terakhir)."
@@ -192,15 +242,31 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "Cookie",
+                "value": "__Secure-next-auth.session-token={{token}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/api/rest/countActiveTickets?date={{$isoTimestamp}}&search=",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "rest", "countActiveTickets"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rest",
+                "countActiveTickets"
+              ],
               "query": [
-                { "key": "date", "value": "{{$isoTimestamp}}" },
-                { "key": "search", "value": "" }
+                {
+                  "key": "date",
+                  "value": "{{$isoTimestamp}}"
+                },
+                {
+                  "key": "search",
+                  "value": ""
+                }
               ]
             },
             "description": "Menghitung jumlah tiket aktif."
@@ -230,17 +296,43 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "Cookie",
+                "value": "__Secure-next-auth.session-token={{token}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/api/rest/myTickets?limit=5&page=0&orderColumn=createdAt&orderBy=desc",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "rest", "myTickets"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rest",
+                "myTickets"
+              ],
               "query": [
-                { "key": "limit", "value": "5", "description": "Jumlah tiket per halaman" },
-                { "key": "page", "value": "0", "description": "Nomor halaman (dimulai dari 0)" },
-                { "key": "orderColumn", "value": "createdAt", "description": "Kolom urutan: createdAt | solvedAt" },
-                { "key": "orderBy", "value": "desc", "description": "Arah urutan: asc | desc" }
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "description": "Jumlah tiket per halaman"
+                },
+                {
+                  "key": "page",
+                  "value": "0",
+                  "description": "Nomor halaman (dimulai dari 0)"
+                },
+                {
+                  "key": "orderColumn",
+                  "value": "createdAt",
+                  "description": "Kolom urutan: createdAt | solvedAt"
+                },
+                {
+                  "key": "orderBy",
+                  "value": "desc",
+                  "description": "Arah urutan: asc | desc"
+                }
               ]
             },
             "description": "Mengambil tiket milik pengguna yang sedang login."
@@ -269,14 +361,28 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "Cookie",
+                "value": "__Secure-next-auth.session-token={{token}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/api/rest/ticketById?id={{ticketId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "rest", "ticketById"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rest",
+                "ticketById"
+              ],
               "query": [
-                { "key": "id", "value": "{{ticketId}}", "description": "ID tiket yang akan diambil" }
+                {
+                  "key": "id",
+                  "value": "{{ticketId}}",
+                  "description": "ID tiket yang akan diambil"
+                }
               ]
             },
             "description": "Mengambil detail tiket berdasarkan ID."
@@ -314,8 +420,15 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "__Secure-next-auth.session-token={{token}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -323,8 +436,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/rest/createTicket",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "rest", "createTicket"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rest",
+                "createTicket"
+              ]
             },
             "description": "Membuat tiket baru yang bersifat publik."
           }
@@ -351,8 +470,15 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "__Secure-next-auth.session-token={{token}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -360,8 +486,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/rest/createTicket",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "rest", "createTicket"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rest",
+                "createTicket"
+              ]
             },
             "description": "Membuat tiket baru yang bersifat private."
           }
@@ -389,8 +521,15 @@
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "__Secure-next-auth.session-token={{token}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -398,8 +537,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/rest/updateStatusTicket",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "rest", "updateStatusTicket"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rest",
+                "updateStatusTicket"
+              ]
             },
             "description": "Menandai tiket sebagai sudah diselesaikan."
           }
@@ -427,8 +572,15 @@
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "__Secure-next-auth.session-token={{token}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -436,8 +588,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/rest/updateStatusTicket",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "rest", "updateStatusTicket"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rest",
+                "updateStatusTicket"
+              ]
             },
             "description": "Mengembalikan status tiket menjadi belum diselesaikan."
           }
@@ -465,14 +623,28 @@
           "request": {
             "method": "DELETE",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "Cookie",
+                "value": "__Secure-next-auth.session-token={{token}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/api/rest/deleteTicket?ticketId={{ticketId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "rest", "deleteTicket"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rest",
+                "deleteTicket"
+              ],
               "query": [
-                { "key": "ticketId", "value": "{{ticketId}}", "description": "ID tiket yang akan dihapus" }
+                {
+                  "key": "ticketId",
+                  "value": "{{ticketId}}",
+                  "description": "ID tiket yang akan dihapus"
+                }
               ]
             },
             "description": "Menghapus tiket berdasarkan ID. Hanya bisa dilakukan oleh pemilik tiket atau admin."
@@ -508,16 +680,35 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "Cookie",
+                "value": "__Secure-next-auth.session-token={{token}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/api/rest/commentsByTicketId?ticketId={{ticketId}}&limit=10&page=0",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "rest", "commentsByTicketId"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rest",
+                "commentsByTicketId"
+              ],
               "query": [
-                { "key": "ticketId", "value": "{{ticketId}}" },
-                { "key": "limit", "value": "10" },
-                { "key": "page", "value": "0" }
+                {
+                  "key": "ticketId",
+                  "value": "{{ticketId}}"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                }
               ]
             },
             "description": "Mengambil komentar pada tiket dengan paginasi."
@@ -550,8 +741,15 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "__Secure-next-auth.session-token={{token}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -559,8 +757,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/rest/createComment",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "rest", "createComment"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rest",
+                "createComment"
+              ]
             },
             "description": "Menambahkan komentar pada tiket."
           }
@@ -588,8 +792,15 @@
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "__Secure-next-auth.session-token={{token}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -597,8 +808,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/rest/updateComment",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "rest", "updateComment"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rest",
+                "updateComment"
+              ]
             },
             "description": "Memperbarui isi komentar berdasarkan ID."
           }
@@ -625,14 +842,27 @@
           "request": {
             "method": "DELETE",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "Cookie",
+                "value": "__Secure-next-auth.session-token={{token}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/api/rest/deleteComment?id={{commentId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "rest", "deleteComment"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rest",
+                "deleteComment"
+              ],
               "query": [
-                { "key": "id", "value": "{{commentId}}" }
+                {
+                  "key": "id",
+                  "value": "{{commentId}}"
+                }
               ]
             },
             "description": "Menghapus komentar berdasarkan ID."
@@ -666,14 +896,27 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "Cookie",
+                "value": "__Secure-next-auth.session-token={{token}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/api/rest/progressionsByTicketId?ticketId={{ticketId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "rest", "progressionsByTicketId"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rest",
+                "progressionsByTicketId"
+              ],
               "query": [
-                { "key": "ticketId", "value": "{{ticketId}}" }
+                {
+                  "key": "ticketId",
+                  "value": "{{ticketId}}"
+                }
               ]
             },
             "description": "Mengambil daftar progres berdasarkan ID tiket."
@@ -705,8 +948,15 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "__Secure-next-auth.session-token={{token}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -714,8 +964,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/rest/createProgression",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "rest", "createProgression"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rest",
+                "createProgression"
+              ]
             },
             "description": "Membuat entri progres baru untuk tiket."
           }
@@ -742,8 +998,15 @@
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "__Secure-next-auth.session-token={{token}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -751,8 +1014,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/rest/updateProgression",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "rest", "updateProgression"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rest",
+                "updateProgression"
+              ]
             },
             "description": "Memperbarui data progres berdasarkan ID."
           }
@@ -779,14 +1048,27 @@
           "request": {
             "method": "DELETE",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "Cookie",
+                "value": "__Secure-next-auth.session-token={{token}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/api/rest/deleteProgression?id={{progressionId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "rest", "deleteProgression"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rest",
+                "deleteProgression"
+              ],
               "query": [
-                { "key": "id", "value": "{{progressionId}}" }
+                {
+                  "key": "id",
+                  "value": "{{progressionId}}"
+                }
               ]
             },
             "description": "Menghapus entri progres berdasarkan ID."
@@ -827,14 +1109,27 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "Cookie",
+                "value": "__Secure-next-auth.session-token={{token}}",
+                "type": "text"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/api/rest/checkUserVote?ticketId={{ticketId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "rest", "checkUserVote"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rest",
+                "checkUserVote"
+              ],
               "query": [
-                { "key": "ticketId", "value": "{{ticketId}}" }
+                {
+                  "key": "ticketId",
+                  "value": "{{ticketId}}"
+                }
               ]
             },
             "description": "Memeriksa apakah user saat ini sudah vote pada tiket tertentu."
@@ -866,8 +1161,15 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "__Secure-next-auth.session-token={{token}}",
+                "type": "text"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -875,8 +1177,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/rest/voteTicket",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "rest", "voteTicket"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rest",
+                "voteTicket"
+              ]
             },
             "description": "Toggle vote pada tiket. Jika sudah vote maka unvote, jika belum vote maka vote."
           }
@@ -910,11 +1218,23 @@
           ],
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "__Secure-next-auth.session-token={{token}}",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/rest/getServerTime",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "rest", "getServerTime"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rest",
+                "getServerTime"
+              ]
             },
             "description": "Mengambil waktu server saat ini."
           }

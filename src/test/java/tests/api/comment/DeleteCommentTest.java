@@ -13,7 +13,7 @@ public class DeleteCommentTest extends BaseApiTest {
         String commentId = JsonFileManager.readValue(COMMENT_ID_FILE, "commentId");
 
         Response response = authRequest()
-                .queryParam("id", commentId)
+                .queryParam("commentId", commentId)
                 .delete("/api/rest/deleteComment");
 
         Assert.assertEquals(response.getStatusCode(), 200, "Delete comment should return 200");

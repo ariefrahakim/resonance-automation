@@ -46,8 +46,14 @@ public class CommonSteps {
 
     @When("saya berada di halaman dashboard")
     public void iNavigateToDashboard() {
-        homePage.navigate();
-        sleep(1500);
+        String url = DriverManager.getDriver().getCurrentUrl();
+        // Jika sudah di dashboard, hanya verifikasi; jika tidak, navigasi dulu
+        if (url.contains("/login")) {
+            homePage.navigate();
+            sleep(1500);
+        }
+        Assert.assertFalse(DriverManager.getDriver().getCurrentUrl().contains("/login"),
+                "Harus di halaman dashboard. URL: " + DriverManager.getDriver().getCurrentUrl());
     }
 
     @When("saya mengakses halaman buat tiket secara langsung")
