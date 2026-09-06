@@ -69,40 +69,10 @@
         </classes>
     </test>
 
-    <!-- ===== WEB TESTS ===== -->
-    <test name="Web - Login Positive Tests">
+    <!-- ===== WEB TESTS (Cucumber/Gherkin via CucumberRunner) ===== -->
+    <test name="Web BDD Tests">
         <classes>
-            <class name="tests.web.auth.LoginWebTest"/>
-        </classes>
-    </test>
-
-    <test name="Web - Login Negative Tests">
-        <classes>
-            <class name="tests.web.auth.NegativeLoginWebTest"/>
-        </classes>
-    </test>
-
-    <test name="Web - View Ticket Tests">
-        <classes>
-            <class name="tests.web.ticket.ViewTicketWebTest"/>
-        </classes>
-    </test>
-
-    <test name="Web - Create Ticket Tests">
-        <classes>
-            <class name="tests.web.ticket.CreateTicketWebTest"/>
-        </classes>
-    </test>
-
-    <test name="Web - Ticket Negative Tests">
-        <classes>
-            <class name="tests.web.ticket.NegativeTicketWebTest"/>
-        </classes>
-    </test>
-
-    <test name="Web - History Tests">
-        <classes>
-            <class name="tests.web.history.HistoryWebTest"/>
+            <class name="runner.CucumberRunner"/>
         </classes>
     </test>
 
