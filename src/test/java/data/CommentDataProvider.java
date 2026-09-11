@@ -3,37 +3,41 @@ package data;
 import org.testng.annotations.DataProvider;
 
 /**
- * Penyedia data untuk pengujian komentar tiket.
- * Mencakup skenario positif dan negatif sesuai API docs.
+ * TestNG DataProvider for comment endpoint test scenarios.
+ *
+ * Provides varied comment content rows to the create-comment @Test method,
+ * demonstrating data-driven testing across different comment types.
  */
 public class CommentDataProvider {
 
     /**
-     * Data positif: komentar dengan berbagai variasi isi yang valid.
-     * Kolom: [isi komentar, deskripsi skenario]
+     * Positive comment creation scenarios — all should return HTTP 200.
      *
-     * Sesuai API docs: body wajib dengan minLength: 1
+     * Columns: [commentBody, scenarioDescription]
+     *
+     * API validation rule: body is required with minLength: 1
      */
     @DataProvider(name = "createCommentData")
     public static Object[][] createCommentData() {
         return new Object[][] {
-            { "Komentar pertama dari automation test",                    "Komentar teks biasa" },
-            { "Sedang dalam proses investigasi oleh tim terkait",         "Komentar status update" },
-            { "Masalah ini sudah ada tiketnya sebelumnya, mohon digabung","Komentar referensi duplikat" },
+            { "First comment from automation test",                        "Plain text comment" },
+            { "Currently under investigation by the responsible team",    "Status update comment" },
+            { "This issue already has an existing ticket, please merge",  "Duplicate reference comment" },
         };
     }
 
     /**
-     * Data negatif: komentar yang seharusnya gagal dibuat.
-     * Kolom: [isi komentar, ticketId, deskripsi skenario]
+     * Negative comment creation scenarios — all should fail (not HTTP 200).
+     *
+     * Columns: [commentBody, ticketId, scenarioDescription]
      */
     @DataProvider(name = "createCommentInvalidData")
     public static Object[][] createCommentInvalidData() {
         return new Object[][] {
-            // Isi komentar kosong (melanggar minLength: 1)
-            { "",    "valid-ticket-id", "Isi komentar kosong" },
-            // ID tiket tidak valid
-            { "Komentar valid", "id-tiket-tidak-ada-xyz", "ID tiket tidak ditemukan" },
+            // Empty body violates API minLength: 1
+            { "",              "valid-ticket-id",        "Empty comment body (minLength violation)" },
+            // Valid body but non-existent ticket
+            { "Valid comment", "non-existent-ticket-xyz", "Valid body but ticket ID not found" },
         };
     }
 }

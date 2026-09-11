@@ -1,1242 +1,891 @@
 {
   "info": {
-    "_postman_id": "resonance-automation-collection",
-    "name": "Resonance API Collection",
-    "description": "Koleksi pengujian API untuk aplikasi Resonance (https://resonance.dibimbing.id).\nMencakup endpoint: Auth, Tiket, Komentar, Progres, Vote, dan Utilitas.\n\nCara penggunaan:\n1. Import collection ini ke Postman\n2. Set environment variable: baseUrl, token\n3. Jalankan request Auth > Login terlebih dahulu untuk mendapatkan token\n4. Token otomatis disimpan via Test script",
+    "_postman_id": "resonance-api-bearer-v2",
+    "name": "Resonance API",
+    "description": "Resonance API Collection — Bearer Token Auth.\n\nEnvironment Variables (sama dengan config.properties):\n  baseUrl         = https://resonance.dibimbing.id\n  token           = (auto-saved after login)\n  ticketId        = (auto-saved after createTicket)\n  commentId       = (auto-saved after createComment)\n  progressionId   = (auto-saved after createProgression)\n\nUrutan eksekusi yang disarankan:\n  Auth > Login → Tickets > Create Ticket → Comments > Create Comment\n  → Progressions > Create Progression → Votes",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
+    { "key": "baseUrl",         "value": "https://resonance.dibimbing.id", "type": "string" },
+    { "key": "username",        "value": "user1",    "type": "string" },
+    { "key": "password",        "value": "password", "type": "string" },
+    { "key": "token",           "value": "",         "type": "string" },
+    { "key": "ticketId",        "value": "",         "type": "string" },
+    { "key": "commentId",       "value": "",         "type": "string" },
+    { "key": "progressionId",   "value": "",         "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "event": [
     {
-      "key": "baseUrl",
-      "value": "https://resonance.dibimbing.id",
-      "type": "string",
-      "description": "Base URL aplikasi Resonance"
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Collection-level pre-request: log which request is about to run",
+          "console.log('[PRE] Running:', pm.info.requestName);"
+        ]
+      }
     },
     {
-      "key": "token",
-      "value": "",
-      "type": "string",
-      "description": "JWT Token dari hasil login"
-    },
-    {
-      "key": "ticketId",
-      "value": "",
-      "type": "string",
-      "description": "ID tiket yang dibuat, dipakai oleh request lain"
-    },
-    {
-      "key": "commentId",
-      "value": "",
-      "type": "string",
-      "description": "ID komentar yang dibuat"
-    },
-    {
-      "key": "progressionId",
-      "value": "",
-      "type": "string",
-      "description": "ID progres yang dibuat"
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Collection-level test: always check response time",
+          "pm.test('Response time < 5000ms', () => pm.expect(pm.response.responseTime).to.be.below(5000));",
+          "// Log status for every request",
+          "console.log('[POST] Status:', pm.response.status, '| Time:', pm.response.responseTime + 'ms');"
+        ]
+      }
     }
   ],
   "item": [
     {
       "name": "Auth",
-      "description": "Endpoint autentikasi pengguna",
       "item": [
         {
-          "name": "Login - Sukses",
+          "name": "POST Login (Save Bearer Token)",
           "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Use collection variables — matches config.properties",
+                  "const username = pm.collectionVariables.get('username') || 'user1';",
+                  "const password = pm.collectionVariables.get('password') || 'password';",
+                  "pm.request.body.raw = JSON.stringify({ usernameOrEmail: username, password: password });",
+                  "console.log('[AUTH PRE] Logging in as:', username);"
+                ]
+              }
+            },
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "// Verifikasi status code 200",
-                  "pm.test('Status code 200', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
+                  "// TC-AUTH-001: Login berhasil dengan kredensial valid",
+                  "pm.test('TC-AUTH-001 | Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('TC-AUTH-001 | ok = true', () => pm.expect(pm.response.json().ok).to.be.true);",
+                  "pm.test('TC-AUTH-001 | token is string', () => pm.expect(pm.response.json().token).to.be.a('string'));",
+                  "pm.test('TC-AUTH-001 | user.id exists', () => pm.expect(pm.response.json().user.id).to.be.a('string'));",
                   "",
-                  "// Verifikasi token ada di respons",
-                  "pm.test('Token dikembalikan', function () {",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json.token).to.be.a('string').and.not.empty;",
-                  "});",
-                  "",
-                  "// Simpan token ke collection variable untuk digunakan request berikutnya",
-                  "const json = pm.response.json();",
-                  "pm.collectionVariables.set('token', json.token);",
-                  "console.log('Token berhasil disimpan:', json.token.substring(0, 20) + '...');"
-                ],
-                "type": "text/javascript"
+                  "// Save Bearer token — same key as Java BaseApiTest TOKEN_FILE",
+                  "if (pm.response.json().token) {",
+                  "    pm.collectionVariables.set('token', pm.response.json().token);",
+                  "    console.log('[AUTH POST] Bearer token saved:', pm.response.json().token.substring(0, 25) + '...');",
+                  "}"
+                ]
               }
             }
           ],
           "request": {
+            "auth": { "type": "noauth" },
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Cookie",
-                "value": "__Secure-next-auth.session-token={{token}}",
-                "type": "text"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"usernameOrEmail\": \"user1\",\n  \"password\": \"password\"\n}"
+              "raw": "{\n  \"usernameOrEmail\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}"
             },
-            "url": {
-              "raw": "{{baseUrl}}/api/rest/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "rest",
-                "login"
-              ]
-            },
-            "description": "Login dengan username dan password. Token JWT disimpan otomatis ke variable."
+            "url": { "raw": "{{baseUrl}}/api/rest/login", "host": ["{{baseUrl}}"], "path": ["api","rest","login"] }
           }
         },
         {
-          "name": "Login - Kredensial Tidak Valid",
+          "name": "POST Login - Invalid Password (Negative)",
           "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["console.log('[AUTH NEG PRE] Testing invalid password...');"]
+              }
+            },
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "// Login dengan kredensial salah harus gagal (bukan 200)",
-                  "pm.test('Status code bukan 200 untuk kredensial tidak valid', function () {",
-                  "    pm.expect(pm.response.code).to.not.equal(200);",
-                  "});",
-                  "",
-                  "pm.test('Response berisi pesan error', function () {",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json).to.have.property('message');",
-                  "});"
-                ],
-                "type": "text/javascript"
+                  "// TC-AUTH-002: Login gagal — password salah",
+                  "pm.test('TC-AUTH-002 | Status bukan 200', () => pm.response.to.not.have.status(200));",
+                  "pm.test('TC-AUTH-002 | Error message exists', () => pm.expect(pm.response.json()).to.have.property('message'));"
+                ]
               }
             }
           ],
           "request": {
+            "auth": { "type": "noauth" },
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Cookie",
-                "value": "__Secure-next-auth.session-token={{token}}",
-                "type": "text"
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"usernameOrEmail\": \"{{username}}\",\n  \"password\": \"wrongpassword\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/rest/login", "host": ["{{baseUrl}}"], "path": ["api","rest","login"] }
+          }
+        },
+        {
+          "name": "POST Login - Empty Fields (Negative)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// TC-AUTH-003: Login gagal — field kosong",
+                  "pm.test('TC-AUTH-003 | Status bukan 200', () => pm.response.to.not.have.status(200));"
+                ]
               }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"usernameOrEmail\": \"user_tidak_ada@test.com\",\n  \"password\": \"passwordsalah\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/rest/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "rest",
-                "login"
-              ]
-            },
-            "description": "Skenario negatif: login dengan email yang tidak terdaftar."
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"usernameOrEmail\": \"\",\n  \"password\": \"\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/rest/login", "host": ["{{baseUrl}}"], "path": ["api","rest","login"] }
+          }
+        },
+        {
+          "name": "POST Login - Password Too Short (Negative)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// TC-AUTH-004: Login gagal — password < 4 karakter (minLength validation)",
+                  "pm.test('TC-AUTH-004 | Status bukan 200', () => pm.response.to.not.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"usernameOrEmail\": \"{{username}}\",\n  \"password\": \"ab\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/rest/login", "host": ["{{baseUrl}}"], "path": ["api","rest","login"] }
           }
         }
       ]
     },
     {
       "name": "Tickets",
-      "description": "Endpoint manajemen tiket",
       "item": [
         {
-          "name": "Get Active Tickets",
+          "name": "GET countActiveTickets",
           "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Set current ISO date for the 'date' query param",
+                  "pm.variables.set('currentDate', new Date().toISOString());"
+                ]
+              }
+            },
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status code 200', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('Respons berupa array tiket', function () {",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json).to.be.an('array');",
-                  "});",
-                  "",
-                  "console.log('Jumlah tiket aktif:', pm.response.json().length);"
-                ],
-                "type": "text/javascript"
+                  "pm.test('TC-TICKET-COUNT | Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('TC-TICKET-COUNT | count is number', () => pm.expect(pm.response.json().count).to.be.a('number'));",
+                  "console.log('[TICKET] Active ticket count:', pm.response.json().count);"
+                ]
               }
             }
           ],
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Cookie",
-                "value": "__Secure-next-auth.session-token={{token}}",
-                "type": "text"
-              }
-            ],
             "url": {
-              "raw": "{{baseUrl}}/api/rest/activeTickets?date={{$isoTimestamp}}&order=NEWEST&search=",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "rest",
-                "activeTickets"
-              ],
-              "query": [
-                {
-                  "key": "date",
-                  "value": "{{$isoTimestamp}}",
-                  "description": "Tanggal saat ini dalam format ISO"
-                },
-                {
-                  "key": "order",
-                  "value": "NEWEST",
-                  "description": "Urutan: VOTE | NEWEST | SOLVE"
-                },
-                {
-                  "key": "search",
-                  "value": "",
-                  "description": "Kata kunci pencarian (opsional)"
-                }
-              ]
-            },
-            "description": "Mengambil daftar tiket aktif (belum selesai atau selesai dalam 48 jam terakhir)."
+              "raw": "{{baseUrl}}/api/rest/countActiveTickets?date={{currentDate}}",
+              "host": ["{{baseUrl}}"], "path": ["api","rest","countActiveTickets"],
+              "query": [{"key": "date", "value": "{{currentDate}}"}]
+            }
           }
         },
         {
-          "name": "Count Active Tickets",
+          "name": "GET activeTickets (order NEWEST)",
           "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.variables.set('currentDate', new Date().toISOString());"]
+              }
+            },
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status code 200', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('Respons berupa angka', function () {",
-                  "    pm.expect(pm.response.json()).to.be.a('number');",
-                  "});"
-                ],
-                "type": "text/javascript"
+                  "pm.test('TC-TICKET-GET-ACTIVE | Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('TC-TICKET-GET-ACTIVE | Response is array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+                  "console.log('[TICKET] Active tickets (NEWEST):', pm.response.json().length);"
+                ]
               }
             }
           ],
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Cookie",
-                "value": "__Secure-next-auth.session-token={{token}}",
-                "type": "text"
-              }
-            ],
             "url": {
-              "raw": "{{baseUrl}}/api/rest/countActiveTickets?date={{$isoTimestamp}}&search=",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "rest",
-                "countActiveTickets"
-              ],
+              "raw": "{{baseUrl}}/api/rest/activeTickets?date={{currentDate}}&order=NEWEST&search=&limit=10&page=0",
+              "host": ["{{baseUrl}}"], "path": ["api","rest","activeTickets"],
               "query": [
-                {
-                  "key": "date",
-                  "value": "{{$isoTimestamp}}"
-                },
-                {
-                  "key": "search",
-                  "value": ""
-                }
+                {"key": "date", "value": "{{currentDate}}"},
+                {"key": "order", "value": "NEWEST"},
+                {"key": "search", "value": ""},
+                {"key": "limit", "value": "10"},
+                {"key": "page", "value": "0"}
               ]
-            },
-            "description": "Menghitung jumlah tiket aktif."
+            }
           }
         },
         {
-          "name": "Get My Tickets",
+          "name": "GET activeTickets (order VOTE)",
           "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.variables.set('currentDate', new Date().toISOString());"]
+              }
+            },
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status code 200', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('Respons berupa array', function () {",
-                  "    pm.expect(pm.response.json()).to.be.an('array');",
-                  "});",
-                  "",
-                  "console.log('Jumlah tiket saya:', pm.response.json().length);"
-                ],
-                "type": "text/javascript"
+                  "pm.test('TC-TICKET-GET-VOTE | Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('TC-TICKET-GET-VOTE | Response is array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
               }
             }
           ],
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Cookie",
-                "value": "__Secure-next-auth.session-token={{token}}",
-                "type": "text"
-              }
-            ],
             "url": {
-              "raw": "{{baseUrl}}/api/rest/myTickets?limit=5&page=0&orderColumn=createdAt&orderBy=desc",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "rest",
-                "myTickets"
-              ],
+              "raw": "{{baseUrl}}/api/rest/activeTickets?date={{currentDate}}&order=VOTE&search=&limit=10&page=0",
+              "host": ["{{baseUrl}}"], "path": ["api","rest","activeTickets"],
               "query": [
-                {
-                  "key": "limit",
-                  "value": "5",
-                  "description": "Jumlah tiket per halaman"
-                },
-                {
-                  "key": "page",
-                  "value": "0",
-                  "description": "Nomor halaman (dimulai dari 0)"
-                },
-                {
-                  "key": "orderColumn",
-                  "value": "createdAt",
-                  "description": "Kolom urutan: createdAt | solvedAt"
-                },
-                {
-                  "key": "orderBy",
-                  "value": "desc",
-                  "description": "Arah urutan: asc | desc"
-                }
+                {"key": "date", "value": "{{currentDate}}"},
+                {"key": "order", "value": "VOTE"},
+                {"key": "search", "value": ""},
+                {"key": "limit", "value": "10"},
+                {"key": "page", "value": "0"}
               ]
-            },
-            "description": "Mengambil tiket milik pengguna yang sedang login."
+            }
           }
         },
         {
-          "name": "Get Ticket by ID",
+          "name": "GET myTickets",
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status code 200', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('ID tiket sesuai', function () {",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json.id).to.equal(pm.collectionVariables.get('ticketId'));",
-                  "});"
-                ],
-                "type": "text/javascript"
+                  "pm.test('TC-TICKET-MY | Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('TC-TICKET-MY | Response is array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+                  "console.log('[TICKET] My tickets count:', pm.response.json().length);"
+                ]
               }
             }
           ],
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Cookie",
-                "value": "__Secure-next-auth.session-token={{token}}",
-                "type": "text"
-              }
-            ],
             "url": {
-              "raw": "{{baseUrl}}/api/rest/ticketById?id={{ticketId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "rest",
-                "ticketById"
-              ],
-              "query": [
-                {
-                  "key": "id",
-                  "value": "{{ticketId}}",
-                  "description": "ID tiket yang akan diambil"
-                }
-              ]
-            },
-            "description": "Mengambil detail tiket berdasarkan ID."
+              "raw": "{{baseUrl}}/api/rest/myTickets?limit=10&page=0",
+              "host": ["{{baseUrl}}"], "path": ["api","rest","myTickets"],
+              "query": [{"key": "limit", "value": "10"}, {"key": "page", "value": "0"}]
+            }
           }
         },
         {
-          "name": "Create Ticket - Publik",
+          "name": "POST createTicket (Save ticketId)",
           "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Generate unique title — same approach as Utils.generateRandomString() in Java",
+                  "const rand = Math.random().toString(36).substring(2, 6).toUpperCase();",
+                  "pm.variables.set('uniqueTitle', 'Postman Test Ticket ' + rand);",
+                  "console.log('[TICKET PRE] Creating ticket:', pm.variables.get('uniqueTitle'));"
+                ]
+              }
+            },
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status code 200', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
+                  "// TC-TICKET-001: Membuat tiket publik",
+                  "pm.test('TC-TICKET-001 | Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('TC-TICKET-001 | id exists', () => pm.expect(pm.response.json().id).to.be.a('string'));",
+                  "pm.test('TC-TICKET-001 | title matches', () => pm.expect(pm.response.json().title).to.equal(pm.variables.get('uniqueTitle')));",
+                  "pm.test('TC-TICKET-001 | isPublic = true', () => pm.expect(pm.response.json().isPublic).to.be.true);",
                   "",
-                  "pm.test('ID tiket dikembalikan', function () {",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json.id).to.be.a('string').and.not.empty;",
-                  "});",
-                  "",
-                  "pm.test('Tiket bersifat publik', function () {",
-                  "    pm.expect(pm.response.json().isPublic).to.be.true;",
-                  "});",
-                  "",
-                  "// Simpan ID tiket untuk digunakan request selanjutnya",
-                  "const json = pm.response.json();",
-                  "pm.collectionVariables.set('ticketId', json.id);",
-                  "console.log('Tiket publik dibuat, ID:', json.id);"
-                ],
-                "type": "text/javascript"
+                  "// Save ticketId — same key used in ticket_id.json in Java tests",
+                  "pm.collectionVariables.set('ticketId', pm.response.json().id);",
+                  "console.log('[TICKET POST] ticketId saved:', pm.response.json().id);"
+                ]
               }
             }
           ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Cookie",
-                "value": "__Secure-next-auth.session-token={{token}}",
-                "type": "text"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Tiket Otomatis {{$randomWords}}\",\n  \"description\": \"Tiket ini dibuat melalui Postman automation test\",\n  \"attachment\": null,\n  \"isPublic\": true\n}"
+              "raw": "{\n  \"title\": \"{{uniqueTitle}}\",\n  \"description\": \"Ticket created via Postman for testing\",\n  \"isPublic\": true\n}"
             },
-            "url": {
-              "raw": "{{baseUrl}}/api/rest/createTicket",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "rest",
-                "createTicket"
-              ]
-            },
-            "description": "Membuat tiket baru yang bersifat publik."
+            "url": { "raw": "{{baseUrl}}/api/rest/createTicket", "host": ["{{baseUrl}}"], "path": ["api","rest","createTicket"] }
           }
         },
         {
-          "name": "Create Ticket - Private",
+          "name": "GET ticketById",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const ticketId = pm.collectionVariables.get('ticketId');",
+                  "if (!ticketId) console.warn('[TICKET PRE] ticketId not set — run createTicket first');",
+                  "else console.log('[TICKET PRE] Getting ticket:', ticketId);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-TICKET-GET-BY-ID | Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('TC-TICKET-GET-BY-ID | id matches', () => pm.expect(pm.response.json().id).to.equal(pm.collectionVariables.get('ticketId')));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/rest/ticketById?ticketId={{ticketId}}",
+              "host": ["{{baseUrl}}"], "path": ["api","rest","ticketById"],
+              "query": [{"key": "ticketId", "value": "{{ticketId}}"}]
+            }
+          }
+        },
+        {
+          "name": "POST createTicket - No Title (Negative)",
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status code 200', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('Tiket bersifat private', function () {",
-                  "    pm.expect(pm.response.json().isPublic).to.be.false;",
-                  "});"
-                ],
-                "type": "text/javascript"
+                  "// TC-TICKET-NEG-001: Tiket dengan title kosong harus gagal (minLength validation)",
+                  "pm.test('TC-TICKET-NEG-001 | Status bukan 200', () => pm.response.to.not.have.status(200));"
+                ]
               }
             }
           ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Cookie",
-                "value": "__Secure-next-auth.session-token={{token}}",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"Tiket Private {{$randomWords}}\",\n  \"description\": \"Ini adalah tiket private yang hanya bisa dilihat oleh pemilik\",\n  \"attachment\": null,\n  \"isPublic\": false\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/rest/createTicket",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "rest",
-                "createTicket"
-              ]
-            },
-            "description": "Membuat tiket baru yang bersifat private."
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"\",\n  \"description\": \"Has description but no title\",\n  \"isPublic\": true\n}" },
+            "url": { "raw": "{{baseUrl}}/api/rest/createTicket", "host": ["{{baseUrl}}"], "path": ["api","rest","createTicket"] }
           }
         },
         {
-          "name": "Update Ticket Status - Solved",
+          "name": "POST createTicket - No Auth (Negative)",
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status code 200', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('solvedAt diisi', function () {",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json.solvedAt).to.not.be.null;",
-                  "});"
-                ],
-                "type": "text/javascript"
+                  "// TC-TICKET-NEG-002: Request tanpa Bearer token harus ditolak",
+                  "pm.test('TC-TICKET-NEG-002 | Status 401 atau 403', () => pm.expect([401, 403]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"No Auth Test\",\n  \"description\": \"Should be rejected\",\n  \"isPublic\": true\n}" },
+            "url": { "raw": "{{baseUrl}}/api/rest/createTicket", "host": ["{{baseUrl}}"], "path": ["api","rest","createTicket"] }
+          }
+        },
+        {
+          "name": "PUT updateStatusTicket (Solved)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Set current timestamp — same as Utils.getCurrentDateTime() in Java",
+                  "pm.variables.set('currentDateTime', new Date().toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-TICKET-SOLVE | Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('TC-TICKET-SOLVE | solvedAt is set', () => pm.expect(pm.response.json().solvedAt).to.not.be.null);"
+                ]
               }
             }
           ],
           "request": {
             "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Cookie",
-                "value": "__Secure-next-auth.session-token={{token}}",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"ticketId\": \"{{ticketId}}\",\n  \"solvedAt\": \"{{$isoTimestamp}}\",\n  \"sendEmail\": false\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/rest/updateStatusTicket",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "rest",
-                "updateStatusTicket"
-              ]
-            },
-            "description": "Menandai tiket sebagai sudah diselesaikan."
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"ticketId\": \"{{ticketId}}\",\n  \"solvedAt\": \"{{currentDateTime}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/rest/updateStatusTicket", "host": ["{{baseUrl}}"], "path": ["api","rest","updateStatusTicket"] }
           }
         },
         {
-          "name": "Update Ticket Status - Unsolved",
+          "name": "PUT updateStatusTicket (Unsolved)",
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status code 200', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('solvedAt menjadi null', function () {",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json.solvedAt).to.be.null;",
-                  "});"
-                ],
-                "type": "text/javascript"
+                  "pm.test('TC-TICKET-UNSOLVE | Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('TC-TICKET-UNSOLVE | solvedAt is null', () => pm.expect(pm.response.json().solvedAt).to.be.null);"
+                ]
               }
             }
           ],
           "request": {
             "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Cookie",
-                "value": "__Secure-next-auth.session-token={{token}}",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"ticketId\": \"{{ticketId}}\",\n  \"solvedAt\": null,\n  \"sendEmail\": false\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/rest/updateStatusTicket",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "rest",
-                "updateStatusTicket"
-              ]
-            },
-            "description": "Mengembalikan status tiket menjadi belum diselesaikan."
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"ticketId\": \"{{ticketId}}\",\n  \"solvedAt\": null\n}" },
+            "url": { "raw": "{{baseUrl}}/api/rest/updateStatusTicket", "host": ["{{baseUrl}}"], "path": ["api","rest","updateStatusTicket"] }
           }
         },
         {
-          "name": "Delete Ticket",
+          "name": "DELETE deleteTicket",
           "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "console.log('[TICKET PRE] Deleting ticketId:', pm.collectionVariables.get('ticketId'));"
+                ]
+              }
+            },
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status code 200', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('Penghapusan berhasil', function () {",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json.success).to.be.true;",
-                  "});"
-                ],
-                "type": "text/javascript"
+                  "pm.test('TC-TICKET-DELETE | Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('TC-TICKET-DELETE | success = true', () => pm.expect(pm.response.json().success).to.be.true);",
+                  "// Clear ticketId after deletion",
+                  "pm.collectionVariables.set('ticketId', '');",
+                  "console.log('[TICKET POST] ticketId cleared after deletion.');"
+                ]
               }
             }
           ],
           "request": {
             "method": "DELETE",
-            "header": [
-              {
-                "key": "Cookie",
-                "value": "__Secure-next-auth.session-token={{token}}",
-                "type": "text"
-              }
-            ],
             "url": {
               "raw": "{{baseUrl}}/api/rest/deleteTicket?ticketId={{ticketId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "rest",
-                "deleteTicket"
-              ],
-              "query": [
-                {
-                  "key": "ticketId",
-                  "value": "{{ticketId}}",
-                  "description": "ID tiket yang akan dihapus"
-                }
-              ]
-            },
-            "description": "Menghapus tiket berdasarkan ID. Hanya bisa dilakukan oleh pemilik tiket atau admin."
+              "host": ["{{baseUrl}}"], "path": ["api","rest","deleteTicket"],
+              "query": [{"key": "ticketId", "value": "{{ticketId}}"}]
+            }
           }
         }
       ]
     },
     {
       "name": "Comments",
-      "description": "Endpoint komentar pada tiket",
       "item": [
         {
-          "name": "Get Comments by Ticket ID",
+          "name": "GET commentsByTicketId",
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status code 200', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('Respons berupa array komentar', function () {",
-                  "    pm.expect(pm.response.json()).to.be.an('array');",
-                  "});",
-                  "",
-                  "console.log('Jumlah komentar:', pm.response.json().length);"
-                ],
-                "type": "text/javascript"
+                  "pm.test('TC-COMMENT-GET | Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('TC-COMMENT-GET | Response is array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+                  "console.log('[COMMENT] Comments on ticket:', pm.response.json().length);"
+                ]
               }
             }
           ],
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Cookie",
-                "value": "__Secure-next-auth.session-token={{token}}",
-                "type": "text"
-              }
-            ],
             "url": {
               "raw": "{{baseUrl}}/api/rest/commentsByTicketId?ticketId={{ticketId}}&limit=10&page=0",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "rest",
-                "commentsByTicketId"
-              ],
-              "query": [
-                {
-                  "key": "ticketId",
-                  "value": "{{ticketId}}"
-                },
-                {
-                  "key": "limit",
-                  "value": "10"
-                },
-                {
-                  "key": "page",
-                  "value": "0"
-                }
-              ]
-            },
-            "description": "Mengambil komentar pada tiket dengan paginasi."
+              "host": ["{{baseUrl}}"], "path": ["api","rest","commentsByTicketId"],
+              "query": [{"key": "ticketId", "value": "{{ticketId}}"}, {"key": "limit", "value": "10"}, {"key": "page", "value": "0"}]
+            }
           }
         },
         {
-          "name": "Create Comment",
+          "name": "POST createComment (Save commentId)",
           "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Generate unique comment — same as Utils.generateRandomString() in Java",
+                  "const rand = Math.random().toString(36).substring(2, 6).toUpperCase();",
+                  "pm.variables.set('uniqueComment', 'Postman comment ' + rand);"
+                ]
+              }
+            },
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status code 200', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('ID komentar dikembalikan', function () {",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json.id).to.be.a('string').and.not.empty;",
-                  "});",
-                  "",
-                  "// Simpan ID komentar",
+                  "pm.test('TC-COMMENT-001 | Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('TC-COMMENT-001 | id exists', () => pm.expect(pm.response.json().id).to.be.a('string'));",
+                  "pm.test('TC-COMMENT-001 | ticketId matches', () => pm.expect(pm.response.json().ticketId).to.equal(pm.collectionVariables.get('ticketId')));",
+                  "// Save commentId — same key as comment_id.json in Java tests",
                   "pm.collectionVariables.set('commentId', pm.response.json().id);",
-                  "console.log('Komentar dibuat, ID:', pm.response.json().id);"
-                ],
-                "type": "text/javascript"
+                  "console.log('[COMMENT POST] commentId saved:', pm.response.json().id);"
+                ]
               }
             }
           ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Cookie",
-                "value": "__Secure-next-auth.session-token={{token}}",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"ticketId\": \"{{ticketId}}\",\n  \"body\": \"Komentar automation test - {{$randomWords}}\",\n  \"attachment\": \"\",\n  \"sendEmail\": false\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/rest/createComment",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "rest",
-                "createComment"
-              ]
-            },
-            "description": "Menambahkan komentar pada tiket."
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"ticketId\": \"{{ticketId}}\",\n  \"body\": \"{{uniqueComment}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/rest/createComment", "host": ["{{baseUrl}}"], "path": ["api","rest","createComment"] }
           }
         },
         {
-          "name": "Update Comment",
+          "name": "POST createComment - Empty Body (Negative)",
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status code 200', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('Isi komentar telah diperbarui', function () {",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json.body).to.include('Komentar diperbarui');",
-                  "});"
-                ],
-                "type": "text/javascript"
+                  "// TC-COMMENT-NEG: body kosong harus ditolak (minLength: 1)",
+                  "pm.test('TC-COMMENT-NEG-001 | Status bukan 200', () => pm.response.to.not.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"ticketId\": \"{{ticketId}}\",\n  \"body\": \"\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/rest/createComment", "host": ["{{baseUrl}}"], "path": ["api","rest","createComment"] }
+          }
+        },
+        {
+          "name": "PUT updateComment",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rand = Math.random().toString(36).substring(2, 6).toUpperCase();",
+                  "pm.variables.set('updatedComment', 'Updated comment ' + rand);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-COMMENT-UPDATE | Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('TC-COMMENT-UPDATE | body matches updated value', () => pm.expect(pm.response.json().body).to.equal(pm.variables.get('updatedComment')));"
+                ]
               }
             }
           ],
           "request": {
             "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Cookie",
-                "value": "__Secure-next-auth.session-token={{token}}",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"id\": \"{{commentId}}\",\n  \"body\": \"Komentar diperbarui via automation - {{$randomWords}}\",\n  \"attachment\": \"\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/rest/updateComment",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "rest",
-                "updateComment"
-              ]
-            },
-            "description": "Memperbarui isi komentar berdasarkan ID."
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"commentId\": \"{{commentId}}\",\n  \"body\": \"{{updatedComment}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/rest/updateComment", "host": ["{{baseUrl}}"], "path": ["api","rest","updateComment"] }
           }
         },
         {
-          "name": "Delete Comment",
+          "name": "DELETE deleteComment",
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status code 200', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('Penghapusan komentar berhasil', function () {",
-                  "    pm.expect(pm.response.json().success).to.be.true;",
-                  "});"
-                ],
-                "type": "text/javascript"
+                  "pm.test('TC-COMMENT-DELETE | Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('TC-COMMENT-DELETE | success = true', () => pm.expect(pm.response.json().success).to.be.true);",
+                  "pm.collectionVariables.set('commentId', '');",
+                  "console.log('[COMMENT POST] commentId cleared after deletion.');"
+                ]
               }
             }
           ],
           "request": {
             "method": "DELETE",
-            "header": [
-              {
-                "key": "Cookie",
-                "value": "__Secure-next-auth.session-token={{token}}",
-                "type": "text"
-              }
-            ],
             "url": {
-              "raw": "{{baseUrl}}/api/rest/deleteComment?id={{commentId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "rest",
-                "deleteComment"
-              ],
-              "query": [
-                {
-                  "key": "id",
-                  "value": "{{commentId}}"
-                }
-              ]
-            },
-            "description": "Menghapus komentar berdasarkan ID."
+              "raw": "{{baseUrl}}/api/rest/deleteComment?commentId={{commentId}}",
+              "host": ["{{baseUrl}}"], "path": ["api","rest","deleteComment"],
+              "query": [{"key": "commentId", "value": "{{commentId}}"}]
+            }
           }
         }
       ]
     },
     {
       "name": "Progressions",
-      "description": "Endpoint progres penyelesaian tiket",
       "item": [
         {
-          "name": "Get Progressions by Ticket ID",
+          "name": "GET progressionsByTicketId",
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status code 200', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('Respons berupa array progres', function () {",
-                  "    pm.expect(pm.response.json()).to.be.an('array');",
-                  "});"
-                ],
-                "type": "text/javascript"
+                  "pm.test('TC-PROG-GET | Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('TC-PROG-GET | Response is array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
               }
             }
           ],
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Cookie",
-                "value": "__Secure-next-auth.session-token={{token}}",
-                "type": "text"
-              }
-            ],
             "url": {
               "raw": "{{baseUrl}}/api/rest/progressionsByTicketId?ticketId={{ticketId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "rest",
-                "progressionsByTicketId"
-              ],
-              "query": [
-                {
-                  "key": "ticketId",
-                  "value": "{{ticketId}}"
-                }
-              ]
-            },
-            "description": "Mengambil daftar progres berdasarkan ID tiket."
+              "host": ["{{baseUrl}}"], "path": ["api","rest","progressionsByTicketId"],
+              "query": [{"key": "ticketId", "value": "{{ticketId}}"}]
+            }
           }
         },
         {
-          "name": "Create Progression",
+          "name": "POST createProgression (Save progressionId)",
           "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "console.log('[PROG PRE] Creating progression for ticket:', pm.collectionVariables.get('ticketId'));"
+                ]
+              }
+            },
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status code 200', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('ID progres dikembalikan', function () {",
-                  "    pm.expect(pm.response.json().id).to.be.a('string').and.not.empty;",
-                  "});",
-                  "",
-                  "// Simpan ID progres",
+                  "pm.test('TC-PROG-001 | Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('TC-PROG-001 | id exists', () => pm.expect(pm.response.json().id).to.be.a('string'));",
+                  "pm.test('TC-PROG-001 | title matches', () => pm.expect(pm.response.json().title).to.equal('Investigasi Awal'));",
+                  "// Save progressionId — same key as progression_id.json in Java tests",
                   "pm.collectionVariables.set('progressionId', pm.response.json().id);",
-                  "console.log('Progres dibuat, ID:', pm.response.json().id);"
-                ],
-                "type": "text/javascript"
+                  "console.log('[PROG POST] progressionId saved:', pm.response.json().id);"
+                ]
               }
             }
           ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Cookie",
-                "value": "__Secure-next-auth.session-token={{token}}",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"ticketId\": \"{{ticketId}}\",\n  \"title\": \"Update Progres - {{$randomWords}}\",\n  \"description\": \"Tim sedang menangani masalah ini\",\n  \"attachment\": \"\",\n  \"expectedDone\": \"{{$isoTimestamp}}\",\n  \"sendEmail\": false\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/rest/createProgression",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "rest",
-                "createProgression"
-              ]
-            },
-            "description": "Membuat entri progres baru untuk tiket."
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"ticketId\": \"{{ticketId}}\",\n  \"title\": \"Investigasi Awal\",\n  \"description\": \"Tim sedang menganalisis masalah yang dilaporkan\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/rest/createProgression", "host": ["{{baseUrl}}"], "path": ["api","rest","createProgression"] }
           }
         },
         {
-          "name": "Update Progression",
+          "name": "POST createProgression - Empty Title (Negative)",
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status code 200', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('Judul progres diperbarui', function () {",
-                  "    pm.expect(pm.response.json().title).to.include('Diperbarui');",
-                  "});"
-                ],
-                "type": "text/javascript"
+                  "// TC-PROG-NEG: title kosong harus ditolak (minLength: 1)",
+                  "pm.test('TC-PROG-NEG-001 | Status bukan 200', () => pm.response.to.not.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"ticketId\": \"{{ticketId}}\",\n  \"title\": \"\",\n  \"description\": \"Title is empty\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/rest/createProgression", "host": ["{{baseUrl}}"], "path": ["api","rest","createProgression"] }
+          }
+        },
+        {
+          "name": "PUT updateProgression",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rand = Math.random().toString(36).substring(2, 6).toUpperCase();",
+                  "pm.variables.set('updatedProgTitle', 'Updated Progression ' + rand);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-PROG-UPDATE | Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('TC-PROG-UPDATE | title matches', () => pm.expect(pm.response.json().title).to.equal(pm.variables.get('updatedProgTitle')));"
+                ]
               }
             }
           ],
           "request": {
             "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Cookie",
-                "value": "__Secure-next-auth.session-token={{token}}",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"id\": \"{{progressionId}}\",\n  \"title\": \"Diperbarui - {{$randomWords}}\",\n  \"description\": \"Deskripsi progres telah diperbarui\",\n  \"attachment\": \"\",\n  \"expectedDone\": \"{{$isoTimestamp}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/rest/updateProgression",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "rest",
-                "updateProgression"
-              ]
-            },
-            "description": "Memperbarui data progres berdasarkan ID."
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"progressionId\": \"{{progressionId}}\",\n  \"title\": \"{{updatedProgTitle}}\",\n  \"description\": \"Tim sedang mengembangkan solusi\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/rest/updateProgression", "host": ["{{baseUrl}}"], "path": ["api","rest","updateProgression"] }
           }
         },
         {
-          "name": "Delete Progression",
+          "name": "DELETE deleteProgression",
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status code 200', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('Penghapusan progres berhasil', function () {",
-                  "    pm.expect(pm.response.json().success).to.be.true;",
-                  "});"
-                ],
-                "type": "text/javascript"
+                  "pm.test('TC-PROG-DELETE | Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('TC-PROG-DELETE | success = true', () => pm.expect(pm.response.json().success).to.be.true);",
+                  "pm.collectionVariables.set('progressionId', '');",
+                  "console.log('[PROG POST] progressionId cleared after deletion.');"
+                ]
               }
             }
           ],
           "request": {
             "method": "DELETE",
-            "header": [
-              {
-                "key": "Cookie",
-                "value": "__Secure-next-auth.session-token={{token}}",
-                "type": "text"
-              }
-            ],
             "url": {
-              "raw": "{{baseUrl}}/api/rest/deleteProgression?id={{progressionId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "rest",
-                "deleteProgression"
-              ],
-              "query": [
-                {
-                  "key": "id",
-                  "value": "{{progressionId}}"
-                }
-              ]
-            },
-            "description": "Menghapus entri progres berdasarkan ID."
+              "raw": "{{baseUrl}}/api/rest/deleteProgression?progressionId={{progressionId}}",
+              "host": ["{{baseUrl}}"], "path": ["api","rest","deleteProgression"],
+              "query": [{"key": "progressionId", "value": "{{progressionId}}"}]
+            }
           }
         }
       ]
     },
     {
       "name": "Votes",
-      "description": "Endpoint voting tiket",
       "item": [
         {
-          "name": "Check User Vote",
+          "name": "GET checkUserVote",
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status code 200', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('Field hasVoted ada', function () {",
-                  "    pm.expect(pm.response.json()).to.have.property('hasVoted');",
-                  "});",
-                  "",
-                  "pm.test('Field voteCount ada', function () {",
-                  "    pm.expect(pm.response.json()).to.have.property('voteCount');",
-                  "});",
-                  "",
-                  "const json = pm.response.json();",
-                  "console.log('Status vote:', json.hasVoted, '| Jumlah vote:', json.voteCount);"
-                ],
-                "type": "text/javascript"
+                  "pm.test('TC-VOTE-001 | Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('TC-VOTE-001 | hasVoted is boolean', () => pm.expect(pm.response.json().hasVoted).to.be.a('boolean'));",
+                  "pm.test('TC-VOTE-001 | voteCount is number', () => pm.expect(pm.response.json().voteCount).to.be.a('number'));",
+                  "console.log('[VOTE] hasVoted:', pm.response.json().hasVoted, '| voteCount:', pm.response.json().voteCount);"
+                ]
               }
             }
           ],
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Cookie",
-                "value": "__Secure-next-auth.session-token={{token}}",
-                "type": "text"
-              }
-            ],
             "url": {
               "raw": "{{baseUrl}}/api/rest/checkUserVote?ticketId={{ticketId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "rest",
-                "checkUserVote"
-              ],
-              "query": [
-                {
-                  "key": "ticketId",
-                  "value": "{{ticketId}}"
-                }
-              ]
-            },
-            "description": "Memeriksa apakah user saat ini sudah vote pada tiket tertentu."
+              "host": ["{{baseUrl}}"], "path": ["api","rest","checkUserVote"],
+              "query": [{"key": "ticketId", "value": "{{ticketId}}"}]
+            }
           }
         },
         {
-          "name": "Vote / Unvote Ticket",
+          "name": "POST voteTicket (Toggle Vote)",
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status code 200', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('Response berisi hasVoted dan voteCount', function () {",
-                  "    const json = pm.response.json();",
-                  "    pm.expect(json).to.have.all.keys('hasVoted', 'voteCount');",
-                  "});",
-                  "",
-                  "const json = pm.response.json();",
-                  "console.log('Setelah toggle vote - hasVoted:', json.hasVoted, '| voteCount:', json.voteCount);"
-                ],
-                "type": "text/javascript"
+                  "pm.test('TC-VOTE-002 | Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('TC-VOTE-002 | hasVoted exists', () => pm.expect(pm.response.json()).to.have.property('hasVoted'));",
+                  "pm.test('TC-VOTE-002 | voteCount exists', () => pm.expect(pm.response.json()).to.have.property('voteCount'));",
+                  "console.log('[VOTE] After toggle — hasVoted:', pm.response.json().hasVoted, '| count:', pm.response.json().voteCount);"
+                ]
               }
             }
           ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Cookie",
-                "value": "__Secure-next-auth.session-token={{token}}",
-                "type": "text"
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"ticketId\": \"{{ticketId}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/rest/voteTicket", "host": ["{{baseUrl}}"], "path": ["api","rest","voteTicket"] }
+          }
+        },
+        {
+          "name": "GET checkUserVote - No ticketId (Negative)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// TC-VOTE-NEG: tanpa ticketId harus gagal",
+                  "pm.test('TC-VOTE-NEG-001 | Status bukan 200', () => pm.response.to.not.have.status(200));"
+                ]
               }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"ticketId\": \"{{ticketId}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/rest/voteTicket",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "rest",
-                "voteTicket"
-              ]
-            },
-            "description": "Toggle vote pada tiket. Jika sudah vote maka unvote, jika belum vote maka vote."
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/rest/checkUserVote", "host": ["{{baseUrl}}"], "path": ["api","rest","checkUserVote"] }
           }
         }
       ]
     },
     {
       "name": "Utils",
-      "description": "Endpoint utilitas",
       "item": [
         {
-          "name": "Get Server Time",
+          "name": "GET getServerTime",
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status code 200', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('Field data (waktu server) ada', function () {",
-                  "    pm.expect(pm.response.json()).to.have.property('data');",
-                  "});",
-                  "",
-                  "console.log('Waktu server:', pm.response.json().data);"
-                ],
-                "type": "text/javascript"
+                  "pm.test('TC-UTILS-001 | Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('TC-UTILS-001 | serverTime exists', () => pm.expect(pm.response.json()).to.have.property('serverTime'));",
+                  "console.log('[UTILS] Server time:', pm.response.json().serverTime);"
+                ]
               }
             }
           ],
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Cookie",
-                "value": "__Secure-next-auth.session-token={{token}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/rest/getServerTime",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "rest",
-                "getServerTime"
-              ]
-            },
-            "description": "Mengambil waktu server saat ini."
+            "url": { "raw": "{{baseUrl}}/api/rest/getServerTime", "host": ["{{baseUrl}}"], "path": ["api","rest","getServerTime"] }
           }
         }
       ]

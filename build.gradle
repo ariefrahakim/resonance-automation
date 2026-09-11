@@ -77,11 +77,11 @@ task generateTestCaseDoc(type: JavaExec) {
     description = 'Generate docs/test_cases.xlsx from test case data'
 }
 
-// Default task — select suite via -Dsuite=
+// Default task — runs both API and Web suites
 test {
     useTestNG {
-        def suiteName = System.getProperty('suite', 'testng')
-        suites "src/test/java/runner/${suiteName}.xml"
+        suites 'src/test/java/runner/api-testng.xml',
+               'src/test/java/runner/web-testng.xml'
     }
     testLogging {
         showStandardStreams = true

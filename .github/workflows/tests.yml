@@ -1,8 +1,6 @@
 name: Resonance Automation Tests
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:
@@ -16,8 +14,6 @@ on:
           - api
           - web
           - both
-  schedule:
-    - cron: '0 23 * * *'
 
 jobs:
   api-tests:
@@ -27,6 +23,7 @@ jobs:
       github.event_name != 'workflow_dispatch' ||
       github.event.inputs.test_type == 'api' ||
       github.event.inputs.test_type == 'both'
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -36,12 +33,13 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+          cache: 'gradle'
 
       - name: Grant execute permission to gradlew
         run: chmod +x gradlew
 
-      - name: Run API tests
-        run: ./gradlew clean test -Dsuite=api-testng
+      - name: Run API tests (Bearer token auth)
+        run: ./gradlew clean apiTest --info
 
       - name: Upload TestNG HTML report
         uses: actions/upload-artifact@v4
@@ -60,12 +58,13 @@ jobs:
           retention-days: 30
 
   web-tests:
-    name: Web Tests (Cucumber/Gherkin)
+    name: Web Tests (Cucumber/Gherkin + Screenshots)
     runs-on: ubuntu-latest
     if: >
       github.event_name != 'workflow_dispatch' ||
       github.event.inputs.test_type == 'web' ||
       github.event.inputs.test_type == 'both'
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -75,26 +74,23 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+          cache: 'gradle'
 
-      - name: Install Google Chrome
-        run: |
-          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
-          sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
-          sudo apt-get update
-          sudo apt-get install -y google-chrome-stable
+      - name: Install Google Chrome (stable)
+        uses: browser-actions/setup-chrome@v1
 
       - name: Grant execute permission to gradlew
         run: chmod +x gradlew
 
-      - name: Run Web tests (headless Cucumber)
-        run: ./gradlew clean test -Dsuite=web-testng
+      - name: Run Web tests (headless Cucumber/Gherkin)
+        run: ./gradlew clean webTest --info
 
-      - name: Upload TestNG HTML report
+      - name: Upload failure screenshots
         uses: actions/upload-artifact@v4
-        if: always()
+        if: failure()
         with:
-          name: web-testng-report-${{ github.run_number }}
-          path: build/reports/tests/
+          name: web-failure-screenshots-${{ github.run_number }}
+          path: build/screenshots/
           retention-days: 30
 
       - name: Upload Cucumber HTML report
@@ -102,7 +98,7 @@ jobs:
         if: always()
         with:
           name: web-cucumber-report-${{ github.run_number }}
-          path: build/reports/cucumber/
+          path: build/reports/
           retention-days: 30
 
       - name: Upload Allure results
@@ -118,6 +114,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ api-tests, web-tests ]
     if: always()
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -149,7 +146,7 @@ jobs:
           sudo mv allure-2.27.0 /opt/allure
           sudo ln -s /opt/allure/bin/allure /usr/bin/allure
 
-      - name: Generate Allure report
+      - name: Generate Allure HTML report
         run: allure generate allure-results/merged -o allure-report --clean
 
       - name: Upload Allure HTML report
@@ -158,4 +155,3 @@ jobs:
           name: allure-html-report-${{ github.run_number }}
           path: allure-report/
           retention-days: 30
-

@@ -3,61 +3,79 @@ package data;
 import org.testng.annotations.DataProvider;
 
 /**
- * Penyedia data untuk pengujian tiket.
- * Mendukung skenario positif dan negatif sesuai API docs Resonance.
+ * TestNG DataProvider for ticket endpoint test scenarios.
+ *
+ * Supplies varied input rows to ticket-related @Test methods, enabling
+ * data-driven testing without duplicating test logic.
+ *
+ * Each @DataProvider method returns Object[][] where:
+ *   - Outer array = rows (one execution per row)
+ *   - Inner array = columns (matched to @Test method parameters by position)
  */
 public class TicketDataProvider {
 
     /**
-     * Data positif: pembuatan tiket dengan variasi input valid.
-     * Kolom: [judul, deskripsi, isPublic, deskripsi skenario]
+     * Positive ticket creation scenarios — all should return HTTP 200.
+     *
+     * Columns: [title, description, isPublic, scenarioDescription]
+     *
+     * Covers:
+     *   - Public ticket (visible to all users)
+     *   - Private ticket (visible only to the creator)
+     *   - Bug report with a descriptive title
      */
     @DataProvider(name = "createTicketData")
     public static Object[][] createTicketData() {
         return new Object[][] {
-            { "Tiket Publik Otomatis",    "Deskripsi tiket publik untuk testing",         true,  "Membuat tiket publik" },
-            { "Tiket Private Otomatis",   "Deskripsi tiket private untuk testing",         false, "Membuat tiket private" },
-            { "Bug: Halaman login error", "Saat login dengan akun valid, muncul error 500", true,  "Tiket bug publik dengan deskripsi teknis" },
+            { "Public Ticket Automation",    "Description for public ticket testing",           true,  "Create public ticket with full data" },
+            { "Private Ticket Automation",   "Description for private ticket testing",           false, "Create private ticket (isPublic = false)" },
+            { "Bug: Login page error",       "When logging in with valid credentials, error 500 appears", true, "Public bug report with technical description" },
         };
     }
 
     /**
-     * Data negatif: pembuatan tiket yang seharusnya gagal.
-     * Kolom: [judul, deskripsi, isPublic, deskripsi skenario]
+     * Negative ticket creation scenarios — all should fail (not HTTP 200).
      *
-     * Sesuai API docs: title wajib dengan minLength: 1
+     * Columns: [title, description, isPublic, scenarioDescription]
+     *
+     * API validation rule: title is required with minLength: 1
      */
     @DataProvider(name = "createTicketInvalidData")
     public static Object[][] createTicketInvalidData() {
         return new Object[][] {
-            // Judul kosong (melanggar minLength: 1)
-            { "", "Deskripsi ada tapi judul kosong", true, "Judul tiket kosong" },
+            // Empty title violates minLength: 1
+            { "", "Description present but title is empty", true, "Empty ticket title (minLength violation)" },
         };
     }
 
     /**
-     * Data untuk pengujian pengambilan tiket aktif dengan berbagai urutan.
-     * Kolom: [order, deskripsi]
+     * Order options for fetching active tickets.
+     *
+     * Columns: [order, scenarioDescription]
+     *
+     * The 'order' query parameter controls how the ticket list is sorted.
+     * All three values are valid per the API docs.
      */
     @DataProvider(name = "activeTicketOrderData")
     public static Object[][] activeTicketOrderData() {
         return new Object[][] {
-            { "VOTE",   "Urut berdasarkan jumlah vote" },
-            { "NEWEST", "Urut berdasarkan terbaru" },
-            { "SOLVE",  "Urut berdasarkan status selesai" },
+            { "VOTE",   "Sort tickets by vote count (most voted first)" },
+            { "NEWEST", "Sort tickets by creation date (newest first)" },
+            { "SOLVE",  "Sort tickets by solved status" },
         };
     }
 
     /**
-     * Data negatif untuk pengambilan tiket berdasarkan ID.
-     * Kolom: [ticketId, deskripsi skenario]
+     * Invalid ticket IDs for negative get-by-ID scenarios.
+     *
+     * Columns: [ticketId, scenarioDescription]
      */
     @DataProvider(name = "getTicketInvalidIdData")
     public static Object[][] getTicketInvalidIdData() {
         return new Object[][] {
-            { "id-tidak-ada-12345",  "ID tiket tidak terdaftar di sistem" },
-            { "",                    "ID tiket kosong" },
-            { "null",                "ID tiket berisi string 'null'" },
+            { "id-does-not-exist-12345",  "Non-existent ticket ID" },
+            { "",                          "Empty ticket ID" },
+            { "null",                      "String literal 'null' as ticket ID" },
         };
     }
 }

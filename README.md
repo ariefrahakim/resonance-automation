@@ -1,20 +1,22 @@
 # Resonance Automation
 
-Framework otomasi testing gabungan **API** (RestAssured) dan **Web** (Selenium + Cucumber/Gherkin) untuk aplikasi [Resonance](https://resonance.dibimbing.id).
+Combined **API** (REST Assured + TestNG) and **Web** (Selenium + Cucumber/Gherkin) automation framework for [Resonance](https://resonance.dibimbing.id).
 
-Tech stack: Java 17 · Gradle · TestNG · RestAssured · Selenium 4 · Cucumber 7 · Allure 2
+Tech stack: Java 17 · Gradle · TestNG · REST Assured · Selenium 4 · Cucumber 7 · Allure 2
 
 ---
 
-## Struktur Proyek
+## Project Structure
 
 ```
 resonance-automation/
-├── .github/workflows/tests.yml         # CI/CD — 3 job: API, Web, Allure Report
+├── .github/workflows/tests.yml         # CI/CD — trigger: PR + manual (no schedule)
 ├── docs/
-│   └── test_cases.xlsx                 # Dokumen test case (auto-generated)
+│   ├── A07_Selenium_Java_Automation_Framework_1.pptx  # Reference template
+│   ├── Day33_Data_Binding_UI_API_Automation.pptx      # Day-33 presentation
+│   └── create_ppt.py                                  # PPT generation script
 ├── postman/
-│   └── Resonance_API.postman_collection.json
+│   └── Resonance_API.postman_collection.json          # Full Postman collection with Bearer auth
 ├── src/
 │   ├── main/java/
 │   │   ├── body/                       # Request body builders (API)
@@ -23,18 +25,25 @@ resonance-automation/
 │   │   │   ├── progression/
 │   │   │   ├── ticket/
 │   │   │   └── vote/
-│   │   └── utils/                      # Utilities (ConfigReader, Utils, JsonFileManager)
+│   │   └── utils/
+│   │       ├── ConfigReader.java       # Reads config.properties (never hardcode credentials)
+│   │       ├── JsonFileManager.java    # Reads/writes JSON state files (token, IDs)
+│   │       └── Utils.java             # Random data generators + timestamp formatters
 │   ├── main/resources/
-│   │   ├── config.properties           # Konfigurasi URL + kredensial
-│   │   └── json/                       # State sharing antar test (token, ID)
+│   │   ├── config.properties           # All test configuration — edit here, not in code
+│   │   └── json/                       # State sharing between test classes
+│   │       ├── token.json              # Bearer token from POST /api/rest/login
+│   │       ├── ticket_id.json          # Ticket ID from POST /api/rest/createTicket
+│   │       ├── comment_id.json         # Comment ID from POST /api/rest/createComment
+│   │       └── progression_id.json     # Progression ID from POST /api/rest/createProgression
 │   └── test/java/
-│       ├── base/BaseApiTest.java        # Setup RestAssured
-│       ├── data/                        # DataProvider untuk data-driven API tests
-│       │   ├── LoginDataProvider.java
-│       │   ├── TicketDataProvider.java
-│       │   ├── CommentDataProvider.java
-│       │   └── ProgressionDataProvider.java
-│       ├── locators/                    # Locator terpusat (By.id(), By.cssSelector())
+│       ├── base/BaseApiTest.java        # RestAssured setup + authRequest() + baseRequest()
+│       ├── data/                        # TestNG @DataProvider classes (data binding)
+│       │   ├── LoginDataProvider.java   # loginValidData / loginInvalidData
+│       │   ├── TicketDataProvider.java  # createTicketData / activeTicketOrderData / ...
+│       │   ├── CommentDataProvider.java # createCommentData / createCommentInvalidData
+│       │   └── ProgressionDataProvider.java # createProgressionData
+│       ├── locators/                    # Centralized Selenium locators
 │       │   ├── LoginPageLocators.java
 │       │   ├── HomePageLocators.java
 │       │   ├── NewTicketPageLocators.java
@@ -47,13 +56,12 @@ resonance-automation/
 │       │   ├── NewTicketPage.java
 │       │   ├── TicketDetailPage.java
 │       │   └── HistoryPage.java
-│       ├── runner/                      # Test suites
-│       │   ├── testng.xml              # Full suite (API only — web pakai Cucumber)
-│       │   ├── api-testng.xml          # API suite
+│       ├── runner/
+│       │   ├── api-testng.xml          # API test suite (TestNG)
 │       │   ├── web-testng.xml          # Web suite (runs CucumberRunner)
 │       │   └── CucumberRunner.java     # Cucumber/TestNG runner
 │       ├── steps/                       # Cucumber Step Definitions
-│       │   ├── Hooks.java              # Before/After per scenario (WebDriver init/quit)
+│       │   ├── Hooks.java              # Before/After per scenario — screenshot on failure
 │       │   ├── LoginSteps.java
 │       │   ├── TicketSteps.java
 │       │   ├── HistorySteps.java
@@ -64,7 +72,7 @@ resonance-automation/
 │       │   ├── comment/ (Create, Update, Delete, Negative)
 │       │   ├── progression/ (Create, Update, Delete, Negative)
 │       │   └── vote/    (Vote, Negative)
-│       └── utils/TestCaseDocGenerator.java  # Generator docs/test_cases.xlsx
+│       └── utils/TestCaseDocGenerator.java
 └── test/resources/features/            # Gherkin Feature Files
     ├── login.feature
     ├── create_ticket.feature
@@ -74,9 +82,9 @@ resonance-automation/
 
 ---
 
-## Konfigurasi
+## Configuration
 
-Edit `src/main/resources/config.properties`:
+Edit `src/main/resources/config.properties` — never hardcode values in test code:
 
 ```properties
 baseUrlResonance=https://resonance.dibimbing.id
@@ -89,59 +97,188 @@ headless=true
 
 ---
 
-## Prasyarat
+## Prerequisites
 
 - Java 17+
 - Gradle 8+
 - Google Chrome (web tests)
-- Allure CLI (opsional, untuk lihat report lokal)
+- Allure CLI (optional, for local reports)
 
 ---
 
-## Menjalankan Test
+## Running Tests
 
 ```bash
-# Semua API test
-./gradlew clean test -Dsuite=api-testng
+# API tests only (REST Assured + TestNG)
+./gradlew clean apiTest
 
-# Semua Web test (Cucumber/Gherkin)
-./gradlew clean test -Dsuite=web-testng
+# Web tests only (Cucumber/Gherkin + Selenium)
+./gradlew clean webTest
 
-# Full suite
+# Both suites (default test task)
 ./gradlew clean test
 
-# Lihat Allure report
+# View Allure report locally
 ./gradlew allureServe
+
+# Generate Excel test case document
+./gradlew generateTestCaseDoc
+# Output: docs/test_cases.xlsx
 ```
 
 ---
 
-## Arsitektur Web Tests (Gherkin BDD)
+## Authentication — Bearer Token
+
+The API uses **Bearer token authentication** (`Authorization: Bearer <token>`).
+
+**Flow:**
+1. `LoginApiTest.testLoginSuccess()` calls `POST /api/rest/login`
+2. Response: `{ "ok": true, "token": "eyJ...", "user": { ... } }`
+3. Token saved to `src/main/resources/json/token.json` via `JsonFileManager`
+4. All authenticated tests call `authRequest()` which reads the token and sets:
+   ```
+   Authorization: Bearer eyJ...
+   ```
+
+**Code:**
+```java
+// BaseApiTest.java
+protected RequestSpecification authRequest() {
+    String token = JsonFileManager.readValue(TOKEN_FILE, "token");
+    return given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + token);
+}
+```
+
+---
+
+## Data Binding / Data-Driven Testing
+
+Data-driven testing runs the **same test logic** with **different input values** — automatically.
+Test data never lives inside test methods; it comes from DataProvider classes or Examples tables.
+
+### API: TestNG @DataProvider
+
+DataProvider classes in `src/test/java/data/` supply rows to `@Test` methods.
+Each row is one test execution. Parameters are position-matched.
+
+```java
+// data/TicketDataProvider.java
+@DataProvider(name = "createTicketData")
+public static Object[][] createTicketData() {
+    return new Object[][] {
+        { "Public Ticket Automation",  "Description...", true,  "Create public ticket" },
+        { "Private Ticket Automation", "Description...", false, "Create private ticket" },
+        { "Bug: Login page error",     "Error 500...",   true,  "Bug report ticket" },
+    };
+}
+
+// tests/api/ticket/CreateTicketTest.java
+@Test(dataProvider = "createTicketData", dataProviderClass = TicketDataProvider.class)
+public void testCreateTicketWithDataProvider(
+        String title, String description, boolean isPublic, String scenario) {
+    // TestNG calls this method once per row — 3 times total
+    Response response = authRequest()
+            .body(CreateTicketBody.build(title, description, isPublic).toString())
+            .post("/api/rest/createTicket");
+    Assert.assertEquals(response.getStatusCode(), 200);
+}
+```
+
+**Valid credentials come from ConfigReader, not hardcoded:**
+```java
+// data/LoginDataProvider.java
+String validUser = ConfigReader.getProperty("usernameOrEmailResonance");
+String validPass = ConfigReader.getProperty("passwordResonance");
+```
+
+**Random data uses Utils:**
+```java
+// data/LoginDataProvider.java (negative scenarios)
+{ Utils.generateRandomEmail(), "password", "Unregistered random email" }
+```
+
+### DataProvider classes overview
+
+| Class | DataProvider(s) | Scenarios |
+|---|---|---|
+| `LoginDataProvider` | `loginValidData`, `loginInvalidData` | 1 valid + 8 invalid login combos |
+| `TicketDataProvider` | `createTicketData`, `createTicketInvalidData`, `activeTicketOrderData`, `getTicketInvalidIdData` | 3 valid tickets, 1 invalid, 3 orders, 3 invalid IDs |
+| `CommentDataProvider` | `createCommentData`, `createCommentInvalidData` | 3 valid comments, 2 invalid |
+| `ProgressionDataProvider` | `createProgressionData` | 3 progression phases |
+
+### Web: Cucumber Scenario Outline
+
+For UI tests, data binding uses the `Scenario Outline` + `Examples` pattern:
+
+```gherkin
+# src/test/resources/features/login.feature
+@negative
+Scenario Outline: Login fails with invalid credentials
+  When  I enter username "<username>"
+  And   I enter password "<password>"
+  And   I click the Login button
+  Then  I should see an error or stay on the login page
+
+  Examples:
+    | username                  | password      |
+    | unknown_user@fake.com     | password      |
+    | user1                     | wrongpassword |
+    | user1                     | ab            |
+```
+
+Cucumber runs the scenario once per row — step definitions stay the same; only the data changes.
+
+---
+
+## Web Test Architecture (BDD)
 
 ```
 Feature File (.feature)
     └── Step Definitions (steps/)
             └── Page Objects (pages/)
-                    └── Locators (locators/)   ← terpusat, stabil
+                    └── Locators (locators/)   ← centralized, stable
                             └── BasePage (pages/BasePage.java)
 ```
 
-### Prinsip Pemilihan Locator
+### Screenshot on Failure
 
-| Prioritas | Strategi | Contoh |
-|-----------|----------|--------|
-| 1 (paling stabil) | `By.id()` | `By.id("btn-login")` |
+`Hooks.java` captures a screenshot on every failed scenario:
+- **Attached to Allure/Cucumber report** for inline viewing
+- **Saved to `build/screenshots/`** for CI artifact upload
+
+```java
+// steps/Hooks.java
+@After
+public void tearDown(Scenario scenario) {
+    if (scenario.isFailed()) {
+        byte[] screenshot = ((TakesScreenshot) DriverManager.getDriver())
+                .getScreenshotAs(OutputType.BYTES);
+        scenario.attach(screenshot, "image/png", "Screenshot - " + scenario.getName());
+        // Also saved to build/screenshots/<timestamp>_<scenarioName>.png
+    }
+    DriverManager.quitDriver();
+}
+```
+
+### Locator Priority
+
+| Priority | Strategy | Example |
+|----------|----------|---------|
+| 1 (most stable) | `By.id()` | `By.id("btn-login")` |
 | 2 | `By.name()` | `By.name("username")` |
-| 3 | `By.cssSelector()` berdasarkan atribut struktural | `By.cssSelector("a[href*='/ticket/']")` |
-| 4 | `By.xpath()` untuk relasi parent/child atau teks | `By.xpath("//a[contains(@href,'/ticket/')]//span[1]")` |
-| ❌ Hindari | Class hash Chakra UI | `div.css-n0wfye`, `span.css-1gu0mm2` |
+| 3 | `By.cssSelector()` on structural attributes | `By.cssSelector("a[href*='/ticket/']")` |
+| 4 | `By.xpath()` for parent/child or text | `By.xpath("//a[contains(@href,'/ticket/')]//span[1]")` |
+| ❌ Avoid | Chakra UI hash classes | `div.css-n0wfye`, `span.css-1gu0mm2` |
 
 ---
 
-## Feature Files
+## Feature Files Coverage
 
-| Feature | Skenario | Positif | Negatif |
-|---------|----------|---------|---------|
+| Feature | Scenarios | Positive | Negative |
+|---------|-----------|----------|---------|
 | Login | 7 | 2 | 5 |
 | Create Ticket | 4 | 2 | 2 |
 | View Ticket | 5 | 4 | 1 |
@@ -151,45 +288,28 @@ Feature File (.feature)
 
 ## API Test Coverage
 
-| Modul | Positif | Negatif | Total |
-|-------|---------|---------|-------|
-| Auth | 2 | 6 | 8 |
+| Module | Positive | Negative | Total |
+|--------|----------|---------|-------|
+| Auth | 2 | 8 | 10 |
 | Ticket | 9 | 6 | 15 |
-| Comment | 4 | 4 | 8 |
-| Progression | 4 | 4 | 8 |
-| Vote | 3 | 3 | 6 |
-| **Total** | **22** | **23** | **45** |
-
----
-
-## Data-Driven Testing
-
-Test API menggunakan `@DataProvider` TestNG:
-
-| DataProvider | Skenario |
-|---|---|
-| `loginValidData` | Login sukses dengan username |
-| `loginInvalidData` | 8 kombinasi data tidak valid (email salah, password salah, kosong, terlalu pendek/panjang) |
-| `createTicketData` | Tiket publik, private, bug report |
-| `activeTicketOrderData` | Order: VOTE, NEWEST, SOLVE |
-| `createCommentData` | 3 variasi isi komentar |
-| `createProgressionData` | 3 fase progres (investigasi, pengembangan, QA) |
+| Comment | 4 | 3 | 7 |
+| Progression | 4 | 3 | 7 |
+| Vote | 3 | 4 | 7 |
+| **Total** | **22** | **24** | **46** |
 
 ---
 
 ## Allure Report
 
-Allure terintegrasi untuk TestNG (API) dan Cucumber (Web).
-
 ```bash
-# Generate & buka report lokal
+# Generate & open locally
 ./gradlew allureServe
 
-# Generate report (HTML saja)
+# Generate HTML only
 ./gradlew allureReport
 ```
 
-Pada CI/CD, Allure HTML report di-upload sebagai artifact (`allure-html-report-{run_number}`).
+In CI, the Allure HTML report is uploaded as artifact `allure-html-report-{run_number}`.
 
 ---
 
@@ -197,22 +317,24 @@ Pada CI/CD, Allure HTML report di-upload sebagai artifact (`allure-html-report-{
 
 Import `postman/Resonance_API.postman_collection.json`:
 
-- Token otomatis disimpan setelah login
-- ID tiket/komentar/progres tersimpan otomatis ke collection variable
-- Setiap request memiliki test assertion
-- Endpoint: Auth, Tickets, Comments, Progressions, Votes, Utils
+- **Collection-level Bearer auth** — set automatically from token variable
+- **Pre-request scripts** — generate unique random data (title, comment) before each request
+- **Test scripts** — assert status, field existence, and value correctness per request
+- **Auto-save IDs** — Login saves `token`, createTicket saves `ticketId`, createComment saves `commentId`, createProgression saves `progressionId`
+- **Collection variables** (match Java config):
+  - `baseUrl` = `https://resonance.dibimbing.id`
+  - `username` = `user1`
+  - `password` = `password`
+  - `token`, `ticketId`, `commentId`, `progressionId` = auto-filled
+
+Recommended execution order: **Auth → Tickets → Comments → Progressions → Votes → Utils**
 
 ---
 
-## Test Case Document
+## CI/CD
 
-Generate dokumen Excel:
+Triggered by: **Pull Request** to `main` or **manual dispatch** (no schedule).
 
-```bash
-./gradlew generateTestCaseDoc
-# Output: docs/test_cases.xlsx
-```
-
-File berisi 2 sheet:
-- **API Test Cases** — 40 test case dengan kolom TC ID, Modul, Step, Test Data, Expected Result
-- **Web Test Cases (Gherkin)** — 19 test case dengan format Given/When/Then
+- **api-tests job** — runs `./gradlew apiTest`, uploads TestNG report + Allure results
+- **web-tests job** — runs `./gradlew webTest`, uploads failure screenshots + Cucumber report + Allure results
+- **allure-report job** — merges API + Web Allure results, generates HTML report artifact

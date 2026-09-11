@@ -31,13 +31,13 @@ public class LoginApiTest extends BaseApiTest {
         // Validasi status code harus 200
         Assert.assertEquals(response.getStatusCode(), 200, "Status code harus 200 untuk login sukses");
 
-        // Validasi token tidak null
+        // Validasi Bearer token tidak null
         String token = response.jsonPath().getString("token");
-        Assert.assertNotNull(token, "Token JWT harus dikembalikan setelah login berhasil");
+        Assert.assertNotNull(token, "Bearer token harus dikembalikan setelah login berhasil");
 
-        // Simpan token ke file untuk digunakan test selanjutnya (state sharing)
+        // Simpan token ke file — digunakan sebagai Authorization: Bearer <token> di test berikutnya
         JsonFileManager.writeValue(TOKEN_FILE, "token", token);
-        System.out.println("[PASS] Token berhasil disimpan: " + token.substring(0, Math.min(20, token.length())) + "...");
+        System.out.println("[PASS] Bearer token disimpan: " + token.substring(0, Math.min(20, token.length())) + "...");
     }
 
     /**
