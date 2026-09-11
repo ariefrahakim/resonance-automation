@@ -1,6 +1,7 @@
 package pages;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -36,6 +37,12 @@ public abstract class BasePage {
     /** Waits for the element to be clickable and clicks it. */
     protected void click(By locator) {
         waitForClickable(locator).click();
+    }
+
+    /** Scrolls the element into view then clicks via JavaScript — bypasses animation overlays. */
+    protected void jsClick(By locator) {
+        WebElement el = waitForElement(locator);
+        ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true); arguments[0].click();", el);
     }
 
     /** Clears the element identified by {@code locator} and types the given text. */

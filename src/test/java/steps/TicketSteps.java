@@ -3,11 +3,14 @@ package steps;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 import pages.HomePage;
 import pages.NewTicketPage;
 import utils.DriverManager;
 import utils.Utils;
+
+import java.time.Duration;
 
 /**
  * Step definitions for ticket creation and ticket list features.
@@ -20,7 +23,11 @@ public class TicketSteps {
     @When("I click the Create Ticket button")
     public void iClickCreateTicket() {
         homePage.clickCreateTicket();
-        sleep(1500);
+        // Wait for navigation to /new instead of a fixed sleep — CI runners are slow
+        try {
+            new WebDriverWait(DriverManager.getDriver(), Duration.ofSeconds(10))
+                    .until(d -> d.getCurrentUrl().contains("/new"));
+        } catch (Exception ignored) { }
     }
 
     @Then("I should be on the new ticket page")
