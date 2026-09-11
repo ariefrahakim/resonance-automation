@@ -623,7 +623,7 @@
           "request": {
             "method": "PUT",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"commentId\": \"{{commentId}}\",\n  \"body\": \"{{updatedComment}}\"\n}" },
+            "body": { "mode": "raw", "raw": "{\n  \"id\": \"{{commentId}}\",\n  \"body\": \"{{updatedComment}}\",\n  \"attachment\": \"\"\n}" },
             "url": { "raw": "{{baseUrl}}/api/rest/updateComment", "host": ["{{baseUrl}}"], "path": ["api","rest","updateComment"] }
           }
         },
@@ -762,7 +762,7 @@
           "request": {
             "method": "PUT",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"progressionId\": \"{{progressionId}}\",\n  \"title\": \"{{updatedProgTitle}}\",\n  \"description\": \"Tim sedang mengembangkan solusi\"\n}" },
+            "body": { "mode": "raw", "raw": "{\n  \"id\": \"{{progressionId}}\",\n  \"title\": \"{{updatedProgTitle}}\",\n  \"description\": \"Tim sedang mengembangkan solusi\",\n  \"attachment\": \"\"\n}" },
             "url": { "raw": "{{baseUrl}}/api/rest/updateProgression", "host": ["{{baseUrl}}"], "path": ["api","rest","updateProgression"] }
           }
         },
@@ -785,9 +785,9 @@
           "request": {
             "method": "DELETE",
             "url": {
-              "raw": "{{baseUrl}}/api/rest/deleteProgression?progressionId={{progressionId}}",
+              "raw": "{{baseUrl}}/api/rest/deleteProgression?id={{progressionId}}",
               "host": ["{{baseUrl}}"], "path": ["api","rest","deleteProgression"],
-              "query": [{"key": "progressionId", "value": "{{progressionId}}"}]
+              "query": [{"key": "id", "value": "{{progressionId}}"}]
             }
           }
         }
