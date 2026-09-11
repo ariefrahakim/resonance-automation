@@ -44,19 +44,6 @@ public class NewTicketPage extends BasePage {
         click(NewTicketPageLocators.SUBMIT_BUTTON);
     }
 
-    /** Clicks the back button to return to the dashboard. */
-    public void clickBack() {
-        click(NewTicketPageLocators.BACK_BUTTON);
-    }
-
-    /** Navigates to the new-ticket page, fills in the form, and submits it. */
-    public void createTicket(String title, String description) {
-        navigate();
-        enterTitle(title);
-        enterDescription(description);
-        clickSubmit();
-    }
-
     /** Returns {@code true} if a success toast is visible after ticket submission. */
     public boolean isSuccessToastDisplayed() {
         try {

@@ -12,9 +12,7 @@ Tech stack: Java 17 · Gradle · TestNG · REST Assured · Selenium 4 · Cucumbe
 resonance-automation/
 ├── .github/workflows/tests.yml         # CI/CD — trigger: PR + manual (no schedule)
 ├── docs/
-│   ├── A07_Selenium_Java_Automation_Framework_1.pptx  # Reference template
-│   ├── Day33_Data_Binding_UI_API_Automation.pptx      # Day-33 presentation
-│   └── create_ppt.py                                  # PPT generation script
+│   └── test_cases.xlsx                                # Generated test case document (API + Web)
 ├── postman/
 │   └── Resonance_API.postman_collection.json          # Full Postman collection with Bearer auth
 ├── src/

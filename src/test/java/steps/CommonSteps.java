@@ -4,6 +4,7 @@ import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 import pages.HistoryPage;
 import pages.HomePage;
@@ -11,6 +12,8 @@ import pages.LoginPage;
 import pages.NewTicketPage;
 import utils.ConfigReader;
 import utils.DriverManager;
+
+import java.time.Duration;
 
 /**
  * Shared step definitions used across multiple feature files.
@@ -47,14 +50,13 @@ public class CommonSteps {
     }
 
     /**
-     * Clears all cookies and navigates to a neutral page so that subsequent navigation
-     * to protected routes triggers the app's authentication redirect.
-     * Deleting cookies alone is not enough on some Next.js apps — a page load is needed.
+     * Deletes all browser cookies so that subsequent navigation to protected routes
+     * triggers the app's authentication redirect. Must be called while a page is
+     * already loaded (the Background step logs in first, so cookies exist to delete).
      */
     @Given("I am not logged in")
     public void iAmNotLoggedIn() {
         DriverManager.getDriver().manage().deleteAllCookies();
-        DriverManager.getDriver().navigate().refresh();
     }
 
     @Given("I am on the history page")
@@ -94,8 +96,17 @@ public class CommonSteps {
         sleep(2000);
     }
 
+    /**
+     * Waits up to 8 seconds for the app to redirect to /login, then asserts we are there.
+     * Next.js client-side auth redirects can be slow on CI runners — a fixed sleep fails.
+     */
     @Then("I should be redirected to the login page")
     public void iAmRedirectedToLogin() {
+        try {
+            new WebDriverWait(DriverManager.getDriver(), Duration.ofSeconds(8))
+                    .until(d -> d.getCurrentUrl().contains("/login")
+                            || d.getPageSource().contains("btn-login"));
+        } catch (Exception ignored) { }
         String url        = DriverManager.getDriver().getCurrentUrl();
         String pageSource = DriverManager.getDriver().getPageSource();
         boolean onLogin   = url.contains("/login") || pageSource.contains("btn-login");
