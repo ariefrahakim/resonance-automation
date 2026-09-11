@@ -1,62 +1,65 @@
 @web @auth
-Feature: Login Web
-  Sebagai pengguna Resonance
-  Saya ingin bisa login ke aplikasi
-  Supaya saya bisa mengakses fitur yang tersedia
+Feature: Login
+  As a Resonance user
+  I want to log in to the application
+  So that I can access the available features
+
+  # ${usernameOrEmailResonance} and ${passwordResonance} are resolved at runtime
+  # from config.properties via ConfigReader.resolve() — credentials are never hardcoded here.
 
   Background:
-    Given saya berada di halaman login
+    Given I am on the login page
 
   @positive
-  Scenario: Login berhasil dengan kredensial valid
-    When saya memasukkan username "user1"
-    And saya memasukkan password "password"
-    And saya klik tombol Login
-    Then saya harus diarahkan keluar dari halaman login
-    And saya berada di halaman dashboard
+  Scenario: Login succeeds with valid credentials
+    When I enter username "${usernameOrEmailResonance}"
+    And  I enter password "${passwordResonance}"
+    And  I click the Login button
+    Then I should be redirected away from the login page
+    And  I should be on the dashboard page
 
   @negative
-  Scenario: Login gagal dengan email tidak terdaftar
-    When saya memasukkan username "email_tidak_ada@test.com"
-    And saya memasukkan password "password"
-    And saya klik tombol Login
-    Then saya harus melihat pesan error atau tetap di halaman login
+  Scenario: Login fails with unregistered email
+    When I enter username "unregistered_user@fake.com"
+    And  I enter password "password"
+    And  I click the Login button
+    Then I should see an error or stay on the login page
 
   @negative
-  Scenario: Login gagal dengan password salah
-    When saya memasukkan username "user1"
-    And saya memasukkan password "passwordsalah123"
-    And saya klik tombol Login
-    Then saya harus melihat pesan error atau tetap di halaman login
+  Scenario: Login fails with wrong password
+    When I enter username "${usernameOrEmailResonance}"
+    And  I enter password "wrongpassword123"
+    And  I click the Login button
+    Then I should see an error or stay on the login page
 
   @negative
-  Scenario: Login gagal dengan field username kosong
-    When saya memasukkan username ""
-    And saya memasukkan password "password"
-    And saya klik tombol Login
-    Then saya tetap berada di halaman login
+  Scenario: Login fails when username is empty
+    When I enter username ""
+    And  I enter password "password"
+    And  I click the Login button
+    Then I should stay on the login page
 
   @negative
-  Scenario: Login gagal dengan field password kosong
-    When saya memasukkan username "user1"
-    And saya memasukkan password ""
-    And saya klik tombol Login
-    Then saya tetap berada di halaman login
+  Scenario: Login fails when password is empty
+    When I enter username "${usernameOrEmailResonance}"
+    And  I enter password ""
+    And  I click the Login button
+    Then I should stay on the login page
 
   @negative
-  Scenario Outline: Login gagal dengan berbagai kombinasi data tidak valid
-    When saya memasukkan username "<username>"
-    And saya memasukkan password "<password>"
-    And saya klik tombol Login
-    Then saya harus melihat pesan error atau tetap di halaman login
+  Scenario Outline: Login fails with various invalid credential combinations
+    When I enter username "<username>"
+    And  I enter password "<password>"
+    And  I click the Login button
+    Then I should see an error or stay on the login page
 
     Examples:
-      | username                  | password        |
-      | pengguna_tidak_ada@x.com  | password        |
-      | user1                     | salahpassword   |
-      | user1                     | ab              |
+      | username                      | password      |
+      | unknown_user@fake.com         | password      |
+      | ${usernameOrEmailResonance}   | wrongpassword |
+      | ${usernameOrEmailResonance}   | ab            |
 
   @positive
-  Scenario: Halaman login menampilkan link Register dan Lupa Password
-    Then saya melihat link menuju halaman register
-    And saya melihat link lupa password
+  Scenario: Login page displays Register and Forgot Password links
+    Then I should see a link to the register page
+    And  I should see a forgot password link

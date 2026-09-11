@@ -1,42 +1,44 @@
 @web @ticket
-Feature: Buat Tiket Baru
-  Sebagai pengguna yang sudah login
-  Saya ingin membuat tiket baru
-  Supaya masalah atau kebutuhan saya dapat ditangani
+Feature: Create New Ticket
+  As a logged-in user
+  I want to create a new ticket
+  So that my issue or request can be handled
+
+  # Credentials use ${configKey} placeholders resolved from config.properties at runtime.
 
   Background:
-    Given saya sudah login sebagai "user1" dengan password "password"
-    And saya berada di halaman dashboard
+    Given I am logged in as "${usernameOrEmailResonance}" with password "${passwordResonance}"
+    And   I am on the dashboard page
 
   @positive
-  Scenario: Membuat tiket publik dengan data lengkap
-    When saya klik tombol Create Ticket
-    Then saya berada di halaman buat tiket baru
-    When saya mengisi judul tiket dengan "Tiket Publik Automation Test"
-    And saya mengisi deskripsi tiket dengan "Ini adalah deskripsi tiket yang dibuat via automation"
-    And saya klik Submit Ticket
-    Then tiket berhasil dibuat
+  Scenario: Create a public ticket with complete data
+    When I click the Create Ticket button
+    Then I should be on the new ticket page
+    When I enter the ticket title "Public Automation Ticket"
+    And  I enter the ticket description "This is a ticket description created via automation"
+    And  I click Submit Ticket
+    Then the ticket should be created successfully
 
   @positive
-  Scenario: Membuat tiket private dengan data lengkap
-    When saya klik tombol Create Ticket
-    Then saya berada di halaman buat tiket baru
-    When saya mengisi judul tiket dengan "Tiket Private Automation Test"
-    And saya mengisi deskripsi tiket dengan "Ini adalah deskripsi tiket private"
-    And saya memilih opsi Private
-    And saya klik Submit Ticket
-    Then tiket berhasil dibuat
+  Scenario: Create a private ticket with complete data
+    When I click the Create Ticket button
+    Then I should be on the new ticket page
+    When I enter the ticket title "Private Automation Ticket"
+    And  I enter the ticket description "This is a private ticket description"
+    And  I select the Private option
+    And  I click Submit Ticket
+    Then the ticket should be created successfully
 
   @negative
-  Scenario: Membuat tiket tanpa judul harus gagal
-    When saya klik tombol Create Ticket
-    Then saya berada di halaman buat tiket baru
-    When saya mengisi deskripsi tiket dengan "Deskripsi ada tapi judul kosong"
-    And saya klik Submit Ticket
-    Then tiket gagal dibuat dan saya tetap di halaman buat tiket
+  Scenario: Creating a ticket without a title should fail
+    When I click the Create Ticket button
+    Then I should be on the new ticket page
+    When I enter the ticket description "Description is provided but title is empty"
+    And  I click Submit Ticket
+    Then ticket creation should fail and I should stay on the new ticket page
 
   @negative
-  Scenario: Mengakses halaman buat tiket tanpa login harus diarahkan ke login
-    Given saya tidak dalam keadaan login
-    When saya mengakses halaman buat tiket secara langsung
-    Then saya diarahkan ke halaman login
+  Scenario: Accessing the new ticket page without login should redirect to login
+    Given I am not logged in
+    When  I access the new ticket page directly
+    Then  I should be redirected to the login page

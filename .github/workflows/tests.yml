@@ -1,5 +1,9 @@
 name: Resonance Automation Tests
 
+# Triggers:
+#   pull_request — runs both API and web suites on every PR to main
+#   workflow_dispatch — manual run with a choice to run api, web, or both
+# No schedule trigger — tests run on demand only.
 on:
   pull_request:
     branches: [ main ]
@@ -16,9 +20,16 @@ on:
           - both
 
 jobs:
+  # ─────────────────────────────────────────────
+  # Job 1: API Tests (REST Assured + TestNG)
+  # Runs independently — no browser required.
+  # Bearer token is obtained via POST /api/rest/login and
+  # stored in src/main/resources/json/token.json for subsequent tests.
+  # ─────────────────────────────────────────────
   api-tests:
     name: API Tests
     runs-on: ubuntu-latest
+    # Skip this job when manually dispatching web-only runs
     if: >
       github.event_name != 'workflow_dispatch' ||
       github.event.inputs.test_type == 'api' ||
@@ -33,14 +44,17 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: 'gradle'
+          cache: 'gradle'    # Caches ~/.gradle to speed up subsequent runs
 
       - name: Grant execute permission to gradlew
         run: chmod +x gradlew
 
+      # Runs: src/test/java/runner/api-testng.xml
+      # Auth flow: Login → save token.json → all other tests read it
       - name: Run API tests (Bearer token auth)
         run: ./gradlew clean apiTest --info
 
+      # TestNG HTML report — available even when tests fail (if: always())
       - name: Upload TestNG HTML report
         uses: actions/upload-artifact@v4
         if: always()
@@ -49,6 +63,7 @@ jobs:
           path: build/reports/tests/
           retention-days: 30
 
+      # Allure raw results — merged with web results in the allure-report job
       - name: Upload Allure results
         uses: actions/upload-artifact@v4
         if: always()
@@ -57,9 +72,18 @@ jobs:
           path: build/allure-results/
           retention-days: 30
 
+  # ─────────────────────────────────────────────
+  # Job 2: Web Tests (Selenium + Cucumber/Gherkin)
+  # Requires Google Chrome. Runs headless in CI.
+  # Screenshots are captured automatically on step failure
+  # and uploaded as an artifact for debugging.
+  # Credentials are resolved from config.properties via
+  # ${configKey} placeholders in feature files — never hardcoded.
+  # ─────────────────────────────────────────────
   web-tests:
     name: Web Tests (Cucumber/Gherkin + Screenshots)
     runs-on: ubuntu-latest
+    # Skip this job when manually dispatching api-only runs
     if: >
       github.event_name != 'workflow_dispatch' ||
       github.event.inputs.test_type == 'web' ||
@@ -76,15 +100,22 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
+      # Installs the latest stable Google Chrome.
+      # ChromeDriver is managed automatically by WebDriverManager at runtime.
       - name: Install Google Chrome (stable)
         uses: browser-actions/setup-chrome@v1
 
       - name: Grant execute permission to gradlew
         run: chmod +x gradlew
 
+      # Runs: src/test/java/runner/web-testng.xml → CucumberRunner
+      # Feature files: src/test/resources/features/*.feature
+      # headless=true is set in config.properties for CI compatibility
       - name: Run Web tests (headless Cucumber/Gherkin)
         run: ./gradlew clean webTest --info
 
+      # Failure screenshots saved by Hooks.java to build/screenshots/
+      # Only uploaded when at least one scenario fails — reduces noise on green runs
       - name: Upload failure screenshots
         uses: actions/upload-artifact@v4
         if: failure()
@@ -93,6 +124,7 @@ jobs:
           path: build/screenshots/
           retention-days: 30
 
+      # Cucumber HTML report (also contains step-level timing)
       - name: Upload Cucumber HTML report
         uses: actions/upload-artifact@v4
         if: always()
@@ -101,6 +133,7 @@ jobs:
           path: build/reports/
           retention-days: 30
 
+      # Allure raw results — merged with API results in the allure-report job
       - name: Upload Allure results
         uses: actions/upload-artifact@v4
         if: always()
@@ -109,16 +142,24 @@ jobs:
           path: build/allure-results/
           retention-days: 30
 
+  # ─────────────────────────────────────────────
+  # Job 3: Allure Combined Report
+  # Runs after both jobs regardless of pass/fail (if: always()).
+  # Downloads API and web Allure results, merges them, and generates
+  # a single HTML report artifact for the full test run.
+  # ─────────────────────────────────────────────
   allure-report:
     name: Publish Allure Report
     runs-on: ubuntu-latest
     needs: [ api-tests, web-tests ]
-    if: always()
+    if: always()    # Run even if api-tests or web-tests failed
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # continue-on-error: true handles the case where one job was skipped
+      # (e.g., manual dispatch with test_type = api skips web-tests)
       - name: Download API Allure results
         uses: actions/download-artifact@v4
         with:
@@ -133,6 +174,7 @@ jobs:
           path: allure-results/web
         continue-on-error: true
 
+      # Merge API and web results into a single directory for the Allure CLI
       - name: Merge Allure results
         run: |
           mkdir -p allure-results/merged
@@ -149,6 +191,7 @@ jobs:
       - name: Generate Allure HTML report
         run: allure generate allure-results/merged -o allure-report --clean
 
+      # Download this artifact from the GitHub Actions run page to view the full report
       - name: Upload Allure HTML report
         uses: actions/upload-artifact@v4
         with:

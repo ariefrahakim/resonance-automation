@@ -10,80 +10,80 @@ import utils.DriverManager;
 import utils.Utils;
 
 /**
- * Step definitions untuk fitur tiket (buat dan lihat tiket).
+ * Step definitions for ticket creation and ticket list features.
  */
 public class TicketSteps {
 
     private final HomePage      homePage      = new HomePage(DriverManager.getDriver());
     private final NewTicketPage newTicketPage = new NewTicketPage(DriverManager.getDriver());
 
-    @When("saya klik tombol Create Ticket")
+    @When("I click the Create Ticket button")
     public void iClickCreateTicket() {
         homePage.clickCreateTicket();
         sleep(1500);
     }
 
-    @Then("saya berada di halaman buat tiket baru")
+    @Then("I should be on the new ticket page")
     public void iAmOnNewTicketPage() {
         Assert.assertTrue(newTicketPage.isOnNewPage(),
-                "Seharusnya berada di halaman /new. URL: " + DriverManager.getDriver().getCurrentUrl());
+                "Expected to be on /new page. URL: " + DriverManager.getDriver().getCurrentUrl());
     }
 
-    @When("saya mengisi judul tiket dengan {string}")
+    @When("I enter the ticket title {string}")
     public void iEnterTicketTitle(String title) {
-        // Tambahkan suffix acak agar tidak duplikat di setiap run
+        // Append a random suffix so each run creates a unique ticket title
         String uniqueTitle = title + " - " + Utils.generateRandomString(4);
         newTicketPage.enterTitle(uniqueTitle);
     }
 
-    @And("saya mengisi deskripsi tiket dengan {string}")
+    @And("I enter the ticket description {string}")
     public void iEnterTicketDescription(String description) {
         newTicketPage.enterDescription(description);
     }
 
-    @And("saya memilih opsi Private")
+    @And("I select the Private option")
     public void iSelectPrivateOption() {
         newTicketPage.selectPrivate();
     }
 
-    @And("saya memilih opsi Public")
+    @And("I select the Public option")
     public void iSelectPublicOption() {
         newTicketPage.selectPublic();
     }
 
-    @When("saya klik Submit Ticket")
+    @When("I click Submit Ticket")
     public void iClickSubmitTicket() {
         newTicketPage.clickSubmit();
         sleep(2000);
     }
 
-    @Then("tiket berhasil dibuat")
+    @Then("the ticket should be created successfully")
     public void ticketIsCreatedSuccessfully() {
-        boolean redirected  = !newTicketPage.isOnNewPage();
-        boolean hasSuccess  = newTicketPage.isSuccessToastDisplayed();
+        boolean redirected = !newTicketPage.isOnNewPage();
+        boolean hasSuccess = newTicketPage.isSuccessToastDisplayed();
         Assert.assertTrue(redirected || hasSuccess,
-                "Tiket seharusnya berhasil dibuat (redirect atau toast sukses). URL: "
+                "Expected ticket creation to succeed (redirect or success toast). URL: "
                         + DriverManager.getDriver().getCurrentUrl());
     }
 
-    @Then("tiket gagal dibuat dan saya tetap di halaman buat tiket")
+    @Then("ticket creation should fail and I should stay on the new ticket page")
     public void ticketCreationFailsAndStaysOnPage() {
         sleep(1000);
         boolean stayedOnPage = newTicketPage.isOnNewPage();
         boolean hasError     = newTicketPage.isErrorToastDisplayed();
         Assert.assertTrue(stayedOnPage || hasError,
-                "Tiket dengan judul kosong seharusnya gagal dibuat. URL: "
+                "Expected ticket creation with empty title to fail. URL: "
                         + DriverManager.getDriver().getCurrentUrl());
     }
 
-    @Then("halaman dashboard berhasil dimuat")
+    @Then("the dashboard should be loaded successfully")
     public void dashboardLoaded() {
         String url = DriverManager.getDriver().getCurrentUrl();
         Assert.assertFalse(url.contains("/login"),
-                "Halaman dashboard seharusnya berhasil dimuat. URL: " + url);
+                "Expected dashboard to load successfully. URL: " + url);
     }
 
-    @When("saya memfilter tiket dengan urutan {string}")
+    @When("I filter tickets by order {string}")
     public void iFilterByOrder(String order) {
         switch (order.toLowerCase()) {
             case "vote":
@@ -93,12 +93,12 @@ public class TicketSteps {
                 homePage.filterByNewest();
                 break;
             default:
-                throw new IllegalArgumentException("Order tidak dikenali: " + order);
+                throw new IllegalArgumentException("Unknown order value: " + order);
         }
         sleep(1000);
     }
 
-    @When("saya mencari tiket dengan kata kunci {string}")
+    @When("I search for tickets with keyword {string}")
     public void iSearchTicket(String keyword) {
         homePage.searchTicket(keyword);
         sleep(1000);

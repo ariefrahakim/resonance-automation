@@ -1,37 +1,39 @@
 @web @ticket
-Feature: Melihat Daftar Tiket
-  Sebagai pengguna yang sudah login
-  Saya ingin melihat daftar tiket yang tersedia
-  Supaya saya dapat memantau status dan progres tiket
+Feature: View Ticket List
+  As a logged-in user
+  I want to view the list of available tickets
+  So that I can monitor ticket status and progress
+
+  # Credentials use ${configKey} placeholders resolved from config.properties at runtime.
 
   Background:
-    Given saya sudah login sebagai "user1" dengan password "password"
+    Given I am logged in as "${usernameOrEmailResonance}" with password "${passwordResonance}"
 
   @positive
-  Scenario: Halaman dashboard menampilkan daftar tiket
-    When saya berada di halaman dashboard
-    Then halaman dashboard berhasil dimuat
-    And konten halaman tidak kosong
+  Scenario: Dashboard displays the ticket list
+    When I am on the dashboard page
+    Then the dashboard should be loaded successfully
+    And  the page content is not empty
 
   @positive
-  Scenario: Memfilter tiket berdasarkan urutan terbaru
-    When saya berada di halaman dashboard
-    And saya memfilter tiket dengan urutan "Newest"
-    Then halaman dashboard berhasil dimuat
+  Scenario: Filter tickets by newest order
+    When I am on the dashboard page
+    And  I filter tickets by order "Newest"
+    Then the dashboard should be loaded successfully
 
   @positive
-  Scenario: Memfilter tiket berdasarkan jumlah vote
-    When saya berada di halaman dashboard
-    And saya memfilter tiket dengan urutan "Vote"
-    Then halaman dashboard berhasil dimuat
+  Scenario: Filter tickets by vote count
+    When I am on the dashboard page
+    And  I filter tickets by order "Vote"
+    Then the dashboard should be loaded successfully
 
   @positive
-  Scenario: Mencari tiket dengan kata kunci
-    When saya berada di halaman dashboard
-    And saya mencari tiket dengan kata kunci "Test"
-    Then halaman dashboard berhasil dimuat
+  Scenario: Search tickets by keyword
+    When I am on the dashboard page
+    And  I search for tickets with keyword "Test"
+    Then the dashboard should be loaded successfully
 
   @negative
-  Scenario: Mengakses halaman tiket dengan ID tidak valid
-    When saya mengakses halaman tiket dengan ID "id-tidak-valid-xyz-123"
-    Then halaman menampilkan error atau melakukan redirect
+  Scenario: Accessing a ticket page with an invalid ID
+    When I access the ticket page with ID "id-tidak-valid-xyz-123"
+    Then the page shows an error or redirects

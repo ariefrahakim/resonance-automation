@@ -1,32 +1,34 @@
 @web @history
-Feature: Riwayat Tiket
-  Sebagai pengguna yang sudah login
-  Saya ingin melihat riwayat tiket saya
-  Supaya saya dapat melacak tiket yang sudah dan belum selesai
+Feature: Ticket History
+  As a logged-in user
+  I want to view my ticket history
+  So that I can track tickets that are resolved and pending
+
+  # Credentials use ${configKey} placeholders resolved from config.properties at runtime.
 
   Background:
-    Given saya sudah login sebagai "user1" dengan password "password"
+    Given I am logged in as "${usernameOrEmailResonance}" with password "${passwordResonance}"
 
   @positive
-  Scenario: Navigasi ke halaman riwayat tiket
-    When saya berada di halaman dashboard
-    And saya klik menu History di navbar
-    Then saya berada di halaman riwayat tiket
+  Scenario: Navigate to the ticket history page
+    When I am on the dashboard page
+    And  I click History in the navbar
+    Then I should be on the history page
 
   @positive
-  Scenario: Halaman riwayat tiket berhasil dimuat
-    Given saya berada di halaman riwayat tiket
-    Then halaman riwayat berhasil dimuat
-    And konten halaman riwayat tidak kosong
+  Scenario: History page loads successfully
+    Given I am on the history page
+    Then  the history page should be loaded successfully
+    And   the history page content should not be empty
 
   @positive
-  Scenario: Kembali ke dashboard dari halaman riwayat
-    Given saya berada di halaman riwayat tiket
-    When saya klik tombol kembali ke Dashboard
-    Then saya berada di halaman dashboard
+  Scenario: Navigate back to the dashboard from the history page
+    Given I am on the history page
+    When  I click the back to Dashboard button
+    Then  I should be on the dashboard page
 
   @negative
-  Scenario: Mengakses halaman riwayat tanpa login harus diarahkan ke login
-    Given saya tidak dalam keadaan login
-    When saya mengakses halaman riwayat secara langsung
-    Then saya diarahkan ke halaman login
+  Scenario: Accessing the history page without login should redirect to login
+    Given I am not logged in
+    When  I access the history page directly
+    Then  I should be redirected to the login page
