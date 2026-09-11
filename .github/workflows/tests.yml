@@ -158,10 +158,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # continue-on-error: true handles the case where one job was skipped
-      # (e.g., manual dispatch with test_type = api skips web-tests)
+      # Only download if the job actually ran (not skipped by test_type filter)
       - name: Download API Allure results
         uses: actions/download-artifact@v4
+        if: needs.api-tests.result != 'skipped'
         with:
           name: api-allure-results-${{ github.run_number }}
           path: allure-results/api
@@ -169,6 +169,7 @@ jobs:
 
       - name: Download Web Allure results
         uses: actions/download-artifact@v4
+        if: needs.web-tests.result != 'skipped'
         with:
           name: web-allure-results-${{ github.run_number }}
           path: allure-results/web
