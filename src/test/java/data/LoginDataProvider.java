@@ -67,6 +67,8 @@ public class LoginDataProvider {
             { "",                           "",                "Both username and password empty" },
             // Non-email string without @ symbol
             { "notanemailformat",           "password",        "Username without @ symbol (invalid format)" },
+            // Unregistered username — looks valid but does not exist in the system
+            { "test",                       "password",        "Unregistered username 'test' (valid format, not registered)" },
         };
     }
 }
