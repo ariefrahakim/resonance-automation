@@ -374,9 +374,9 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/rest/ticketById?ticketId={{ticketId}}",
+              "raw": "{{baseUrl}}/api/rest/ticketById?id={{ticketId}}",
               "host": ["{{baseUrl}}"], "path": ["api","rest","ticketById"],
-              "query": [{"key": "ticketId", "value": "{{ticketId}}"}]
+              "query": [{"key": "id", "value": "{{ticketId}}"}]
             }
           }
         },
