@@ -9,50 +9,50 @@ import org.testng.annotations.Test;
 import utils.JsonFileManager;
 
 /**
- * Kelas pengujian untuk endpoint progres tiket.
- * Menggunakan DataProvider untuk variasi data pengujian.
+ * Test class for the ticket progression endpoint.
+ * Uses a DataProvider for data variation in tests.
  */
 public class CreateProgressionTest extends BaseApiTest {
 
     /**
-     * TC-PROGRESS-001: Membuat progres tiket dengan berbagai data (data-driven).
-     * ID progres terakhir disimpan untuk pengujian update dan delete.
+     * TC-PROGRESS-001: Creates a ticket progression with various data (data-driven).
+     * The last progression ID is saved for update and delete tests.
      */
     @Test(priority = 1,
           dataProvider = "createProgressionData",
           dataProviderClass = ProgressionDataProvider.class,
-          description = "Membuat progres tiket dengan berbagai variasi data")
+          description = "Create a ticket progression with various data variations")
     public void testCreateProgressionWithDataProvider(String title, String description, String scenario) {
-        // Baca ID tiket yang sudah tersimpan
+        // Read the ticket ID previously saved
         String ticketId = JsonFileManager.readValue(TICKET_ID_FILE, "ticketId");
-        System.out.println("[INFO] Skenario: " + scenario + " | Tiket ID: " + ticketId);
+        System.out.println("[INFO] Scenario: " + scenario + " | Ticket ID: " + ticketId);
 
         Response response = authRequest()
                 .body(CreateProgressionBody.build(ticketId, title, description).toString())
                 .post("/api/rest/createProgression");
 
-        // Validasi status code
+        // Validate status code
         Assert.assertEquals(response.getStatusCode(), 200,
-                "Pembuatan progres harus berhasil untuk skenario: " + scenario);
+                "Progression creation must succeed for scenario: " + scenario);
 
-        // Validasi ID progres ada di respons
+        // Validate progression ID is present in the response
         String progressionId = response.jsonPath().getString("id");
-        Assert.assertNotNull(progressionId, "ID progres harus dikembalikan setelah dibuat");
+        Assert.assertNotNull(progressionId, "Progression ID must be returned after creation");
 
-        // Validasi judul sesuai yang dikirim
+        // Validate title matches what was sent
         Assert.assertEquals(response.jsonPath().getString("title"), title,
-                "Judul progres harus sesuai yang dikirim");
+                "Progression title must match the one sent");
 
-        // Simpan ID progres terakhir untuk pengujian update/delete
+        // Save the last progression ID for update/delete tests
         JsonFileManager.writeValue(PROGRESSION_ID_FILE, "progressionId", progressionId);
 
-        System.out.println("[PASS] " + scenario + " | ID Progres: " + progressionId);
+        System.out.println("[PASS] " + scenario + " | Progression ID: " + progressionId);
     }
 
     /**
-     * TC-PROGRESS-002: Mengambil daftar progres berdasarkan ID tiket.
+     * TC-PROGRESS-002: Retrieves the list of progressions for a given ticket ID.
      */
-    @Test(priority = 2, description = "Mengambil progres berdasarkan ID tiket")
+    @Test(priority = 2, description = "Retrieve progressions by ticket ID")
     public void testGetProgressionsByTicketId() {
         String ticketId = JsonFileManager.readValue(TICKET_ID_FILE, "ticketId");
 
@@ -61,10 +61,10 @@ public class CreateProgressionTest extends BaseApiTest {
                 .get("/api/rest/progressionsByTicketId");
 
         Assert.assertEquals(response.getStatusCode(), 200,
-                "Pengambilan progres berdasarkan tiket ID harus berhasil");
+                "Retrieving progressions by ticket ID must succeed");
         Assert.assertNotNull(response.jsonPath().getList("$"),
-                "Respons harus berupa list progres");
+                "Response must be a list of progressions");
 
-        System.out.println("[PASS] Jumlah progres pada tiket: " + response.jsonPath().getList("$").size());
+        System.out.println("[PASS] Progression count on ticket: " + response.jsonPath().getList("$").size());
     }
 }

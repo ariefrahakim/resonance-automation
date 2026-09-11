@@ -3,15 +3,15 @@ package locators;
 import org.openqa.selenium.By;
 
 /**
- * Locator terpusat untuk halaman buat tiket baru (/new).
- * Public/Private adalah div yang dapat diklik, bukan input checkbox native.
+ * Centralised locators for the new ticket creation page (/new).
+ * Public/Private controls are clickable divs, not native checkbox inputs.
  */
 public class NewTicketPageLocators {
     // Form fields
     public static final By TITLE_INPUT          = By.id("input-ticket-title");
     public static final By DESCRIPTION_INPUT    = By.id("textarea-ticket-description");
 
-    // Public/Private toggles (Chakra UI custom div — bukan <input>)
+    // Public/Private toggles (Chakra UI custom div — not a native <input>)
     public static final By PUBLIC_TOGGLE        = By.id("checkbox-ticket-public");
     public static final By PRIVATE_TOGGLE       = By.id("checkbox-ticket-private");
 

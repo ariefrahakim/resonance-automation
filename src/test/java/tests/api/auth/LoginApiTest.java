@@ -10,16 +10,16 @@ import utils.ConfigReader;
 import utils.JsonFileManager;
 
 /**
- * Kelas pengujian untuk endpoint autentikasi Resonance.
- * Mencakup skenario login sukses dan gagal.
+ * Test class for the Resonance authentication endpoint.
+ * Covers successful and failed login scenarios.
  */
 public class LoginApiTest extends BaseApiTest {
 
     /**
-     * TC-AUTH-001: Verifikasi login berhasil dengan kredensial valid.
-     * Token JWT yang dikembalikan disimpan untuk digunakan oleh test berikutnya.
+     * TC-AUTH-001: Verifies a successful login with valid credentials.
+     * The returned JWT token is saved for use by subsequent tests.
      */
-    @Test(priority = 1, description = "Login berhasil dengan kredensial valid")
+    @Test(priority = 1, description = "Successful login with valid credentials")
     public void testLoginSuccess() {
         String username = ConfigReader.getProperty("usernameOrEmailResonance");
         String password = ConfigReader.getProperty("passwordResonance");
@@ -28,59 +28,59 @@ public class LoginApiTest extends BaseApiTest {
                 .body(LoginBody.build(username, password).toString())
                 .post("/api/rest/login");
 
-        // Validasi status code harus 200
-        Assert.assertEquals(response.getStatusCode(), 200, "Status code harus 200 untuk login sukses");
+        // Status code must be 200
+        Assert.assertEquals(response.getStatusCode(), 200, "Status code must be 200 for a successful login");
 
-        // Validasi Bearer token tidak null
+        // Bearer token must not be null
         String token = response.jsonPath().getString("token");
-        Assert.assertNotNull(token, "Bearer token harus dikembalikan setelah login berhasil");
+        Assert.assertNotNull(token, "Bearer token must be returned after a successful login");
 
-        // Simpan token ke file — digunakan sebagai Authorization: Bearer <token> di test berikutnya
+        // Save token to file — used as Authorization: Bearer <token> in subsequent tests
         JsonFileManager.writeValue(TOKEN_FILE, "token", token);
-        System.out.println("[PASS] Bearer token disimpan: " + token.substring(0, Math.min(20, token.length())) + "...");
+        System.out.println("[PASS] Bearer token saved: " + token.substring(0, Math.min(20, token.length())) + "...");
     }
 
     /**
-     * TC-AUTH-002: Verifikasi login berhasil menggunakan DataProvider (data-driven).
-     * Menjalankan login dengan berbagai variasi data valid.
+     * TC-AUTH-002: Verifies successful login using a DataProvider (data-driven).
+     * Runs login with various valid data combinations.
      */
     @Test(priority = 2,
           dataProvider = "loginValidData",
           dataProviderClass = LoginDataProvider.class,
-          description = "Login dengan berbagai format kredensial valid")
+          description = "Login with various valid credential formats")
     public void testLoginWithValidData(String username, String password, String scenario) {
-        System.out.println("[INFO] Skenario: " + scenario);
+        System.out.println("[INFO] Scenario: " + scenario);
 
         Response response = baseRequest()
                 .body(LoginBody.build(username, password).toString())
                 .post("/api/rest/login");
 
         Assert.assertEquals(response.getStatusCode(), 200,
-                "Login harus berhasil untuk skenario: " + scenario);
+                "Login must succeed for scenario: " + scenario);
         Assert.assertNotNull(response.jsonPath().getString("token"),
-                "Token harus dikembalikan untuk skenario: " + scenario);
+                "Token must be returned for scenario: " + scenario);
 
-        System.out.println("[PASS] " + scenario + " - Login berhasil");
+        System.out.println("[PASS] " + scenario + " - Login successful");
     }
 
     /**
-     * TC-AUTH-003: Verifikasi login gagal dengan data tidak valid (data-driven).
-     * Setiap kombinasi harus mengembalikan status code bukan 200.
+     * TC-AUTH-003: Verifies login failure with invalid data (data-driven).
+     * Each combination must return a status code other than 200.
      */
     @Test(priority = 3,
           dataProvider = "loginInvalidData",
           dataProviderClass = LoginDataProvider.class,
-          description = "Login gagal dengan berbagai kombinasi data tidak valid")
+          description = "Login fails with various invalid data combinations")
     public void testLoginWithInvalidData(String username, String password, String scenario) {
-        System.out.println("[INFO] Skenario negatif: " + scenario);
+        System.out.println("[INFO] Negative scenario: " + scenario);
 
         Response response = baseRequest()
                 .body(LoginBody.build(username, password).toString())
                 .post("/api/rest/login");
 
-        // Login dengan data tidak valid TIDAK boleh mengembalikan status 200
+        // Login with invalid data must NOT return status 200
         Assert.assertNotEquals(response.getStatusCode(), 200,
-                "Login seharusnya gagal untuk skenario: " + scenario);
+                "Login should fail for scenario: " + scenario);
 
         System.out.println("[PASS] " + scenario + " - Status: " + response.getStatusCode());
     }

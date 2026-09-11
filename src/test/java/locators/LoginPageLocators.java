@@ -3,8 +3,8 @@ package locators;
 import org.openqa.selenium.By;
 
 /**
- * Locator terpusat untuk halaman Login (/login).
- * Menggunakan ID atribut nyata dari halaman Resonance.
+ * Centralised locators for the Login page (/login).
+ * Uses real ID attributes from the Resonance application.
  */
 public class LoginPageLocators {
     // Input fields
@@ -14,7 +14,7 @@ public class LoginPageLocators {
     // Buttons
     public static final By LOGIN_BUTTON      = By.id("btn-login");
 
-    // Error toast - Chakra UI toast muncul di chakra-toast-manager-top
+    // Error toast — Chakra UI toasts render inside chakra-toast-manager-top
     public static final By ERROR_TOAST       = By.cssSelector("li.chakra-toast .chakra-alert[data-status='error']");
     public static final By ANY_TOAST         = By.cssSelector("li.chakra-toast .chakra-alert");
 

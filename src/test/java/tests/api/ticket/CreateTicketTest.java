@@ -10,68 +10,68 @@ import utils.JsonFileManager;
 import utils.Utils;
 
 /**
- * Kelas pengujian untuk endpoint pembuatan tiket Resonance.
- * Menggunakan DataProvider untuk pengujian berbasis data.
+ * Test class for the Resonance ticket creation endpoint.
+ * Uses a DataProvider for data-driven testing.
  */
 public class CreateTicketTest extends BaseApiTest {
 
     /**
-     * TC-TICKET-001: Membuat tiket menggunakan berbagai data input (data-driven).
-     * Data disuplai dari TicketDataProvider.
-     * ID tiket dari baris pertama disimpan untuk pengujian selanjutnya.
+     * TC-TICKET-001: Creates a ticket using various input data (data-driven).
+     * Data is supplied by TicketDataProvider.
+     * The ticket ID from the first public row is saved for subsequent tests.
      */
     @Test(priority = 1,
           dataProvider = "createTicketData",
           dataProviderClass = TicketDataProvider.class,
-          description = "Membuat tiket dengan berbagai variasi data")
+          description = "Create a ticket with various data variations")
     public void testCreateTicketWithDataProvider(String title, String description, boolean isPublic, String scenario) {
-        // Tambahkan string acak agar judul unik setiap kali dijalankan
+        // Append a random string so the title is unique on every run
         String uniqueTitle = title + " - " + Utils.generateRandomString(4);
-        System.out.println("[INFO] Skenario: " + scenario + " | Judul: " + uniqueTitle);
+        System.out.println("[INFO] Scenario: " + scenario + " | Title: " + uniqueTitle);
 
         Response response = authRequest()
                 .body(CreateTicketBody.build(uniqueTitle, description, isPublic).toString())
                 .post("/api/rest/createTicket");
 
-        // Validasi status code
+        // Validate status code
         Assert.assertEquals(response.getStatusCode(), 200,
-                "Pembuatan tiket harus berhasil untuk skenario: " + scenario);
+                "Ticket creation must succeed for scenario: " + scenario);
 
-        // Validasi ID tiket ada di respons
+        // Validate ticket ID is present in the response
         String ticketId = response.jsonPath().getString("id");
-        Assert.assertNotNull(ticketId, "ID tiket harus dikembalikan setelah tiket dibuat");
+        Assert.assertNotNull(ticketId, "Ticket ID must be returned after the ticket is created");
 
-        // Validasi judul sesuai yang dikirim
+        // Validate title matches what was sent
         Assert.assertEquals(response.jsonPath().getString("title"), uniqueTitle,
-                "Judul tiket harus sesuai dengan yang dikirim");
+                "Ticket title must match the one sent");
 
-        // Validasi status publik/privat
+        // Validate public/private status
         Assert.assertEquals(response.jsonPath().getBoolean("isPublic"), isPublic,
-                "Status isPublic harus sesuai dengan yang dikirim");
+                "isPublic status must match the one sent");
 
-        // Simpan ID tiket pertama untuk pengujian berikutnya (komentar, progres, dll.)
+        // Save the first public ticket ID for subsequent tests (comments, progressions, etc.)
         if (isPublic) {
             JsonFileManager.writeValue(TICKET_ID_FILE, "ticketId", ticketId);
         }
 
-        System.out.println("[PASS] " + scenario + " | ID Tiket: " + ticketId);
+        System.out.println("[PASS] " + scenario + " | Ticket ID: " + ticketId);
     }
 
     /**
-     * TC-TICKET-002: Membuat tiket tanpa autentikasi harus gagal.
+     * TC-TICKET-002: Creating a ticket without authentication must fail.
      */
-    @Test(priority = 2, description = "Pembuatan tiket tanpa token autentikasi harus gagal")
+    @Test(priority = 2, description = "Ticket creation without an authentication token must fail")
     public void testCreateTicketWithoutAuth() {
-        String title = "Tiket Tanpa Auth - " + Utils.generateRandomString(6);
+        String title = "Ticket Without Auth - " + Utils.generateRandomString(6);
 
         Response response = baseRequest()
-                .body(CreateTicketBody.build(title, "Deskripsi tiket tanpa auth", true).toString())
+                .body(CreateTicketBody.build(title, "Ticket description without auth", true).toString())
                 .post("/api/rest/createTicket");
 
-        // Tanpa autentikasi, server harus menolak permintaan (401 atau 403)
+        // Without authentication the server must reject the request (401 or 403)
         Assert.assertNotEquals(response.getStatusCode(), 200,
-                "Pembuatan tiket tanpa token harus ditolak");
+                "Ticket creation without a token must be rejected");
 
-        System.out.println("[PASS] Request tanpa auth ditolak dengan status: " + response.getStatusCode());
+        System.out.println("[PASS] Request without auth rejected with status: " + response.getStatusCode());
     }
 }

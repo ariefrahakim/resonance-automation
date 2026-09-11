@@ -10,53 +10,53 @@ import utils.JsonFileManager;
 import utils.Utils;
 
 /**
- * Kelas pengujian untuk endpoint komentar tiket.
- * Mencakup pembuatan komentar dan pengambilan komentar berdasarkan tiket.
+ * Test class for the ticket comment endpoint.
+ * Covers comment creation and retrieval of comments by ticket.
  */
 public class CreateCommentTest extends BaseApiTest {
 
     /**
-     * TC-COMMENT-001: Membuat komentar dengan berbagai variasi isi (data-driven).
-     * ID komentar terakhir disimpan untuk pengujian update dan delete.
+     * TC-COMMENT-001: Creates a comment with various content variations (data-driven).
+     * The last created comment ID is saved for update and delete tests.
      */
     @Test(priority = 1,
           dataProvider = "createCommentData",
           dataProviderClass = CommentDataProvider.class,
-          description = "Membuat komentar dengan berbagai variasi konten")
+          description = "Create a comment with various content variations")
     public void testCreateCommentWithDataProvider(String commentBody, String scenario) {
-        // Baca ID tiket yang sudah disimpan sebelumnya
+        // Read the ticket ID saved by a previous test
         String ticketId = JsonFileManager.readValue(TICKET_ID_FILE, "ticketId");
-        System.out.println("[INFO] Skenario: " + scenario + " | Tiket ID: " + ticketId);
+        System.out.println("[INFO] Scenario: " + scenario + " | Ticket ID: " + ticketId);
 
-        // Tambahkan tanda unik agar konten berbeda setiap run
+        // Append a unique tag so the content differs on every run
         String uniqueComment = commentBody + " - " + Utils.generateRandomString(4);
 
         Response response = authRequest()
                 .body(CreateCommentBody.build(ticketId, uniqueComment).toString())
                 .post("/api/rest/createComment");
 
-        // Validasi status code
+        // Validate status code
         Assert.assertEquals(response.getStatusCode(), 200,
-                "Pembuatan komentar harus berhasil untuk skenario: " + scenario);
+                "Comment creation must succeed for scenario: " + scenario);
 
-        // Validasi ID komentar ada di respons
+        // Validate comment ID is present in the response
         String commentId = response.jsonPath().getString("id");
-        Assert.assertNotNull(commentId, "ID komentar harus dikembalikan setelah komentar dibuat");
+        Assert.assertNotNull(commentId, "Comment ID must be returned after the comment is created");
 
-        // Validasi tiket ID sesuai
+        // Validate ticket ID matches
         Assert.assertEquals(response.jsonPath().getString("ticketId"), ticketId,
-                "ID tiket di respons harus sesuai");
+                "Ticket ID in the response must match the one sent");
 
-        // Simpan ID komentar terakhir untuk pengujian update/delete
+        // Save the last comment ID for update/delete tests
         JsonFileManager.writeValue(COMMENT_ID_FILE, "commentId", commentId);
 
-        System.out.println("[PASS] " + scenario + " | ID Komentar: " + commentId);
+        System.out.println("[PASS] " + scenario + " | Comment ID: " + commentId);
     }
 
     /**
-     * TC-COMMENT-002: Mengambil daftar komentar berdasarkan ID tiket.
+     * TC-COMMENT-002: Retrieves the list of comments for a given ticket ID.
      */
-    @Test(priority = 2, description = "Mengambil komentar berdasarkan ID tiket")
+    @Test(priority = 2, description = "Retrieve comments by ticket ID")
     public void testGetCommentsByTicketId() {
         String ticketId = JsonFileManager.readValue(TICKET_ID_FILE, "ticketId");
 
@@ -67,10 +67,10 @@ public class CreateCommentTest extends BaseApiTest {
                 .get("/api/rest/commentsByTicketId");
 
         Assert.assertEquals(response.getStatusCode(), 200,
-                "Pengambilan komentar berdasarkan tiket ID harus berhasil");
+                "Retrieving comments by ticket ID must succeed");
         Assert.assertNotNull(response.jsonPath().getList("$"),
-                "Respons harus berupa list komentar");
+                "Response must be a list of comments");
 
-        System.out.println("[PASS] Jumlah komentar pada tiket: " + response.jsonPath().getList("$").size());
+        System.out.println("[PASS] Number of comments on ticket: " + response.jsonPath().getList("$").size());
     }
 }

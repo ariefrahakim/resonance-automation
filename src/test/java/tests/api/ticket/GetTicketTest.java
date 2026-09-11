@@ -9,20 +9,20 @@ import utils.JsonFileManager;
 import utils.Utils;
 
 /**
- * Kelas pengujian untuk endpoint pengambilan data tiket.
- * Mencakup: tiket aktif, tiket saya, tiket berdasarkan ID, dan jumlah tiket.
+ * Test class for ticket retrieval endpoints.
+ * Covers: active tickets, my tickets, ticket by ID, and ticket count.
  */
 public class GetTicketTest extends BaseApiTest {
 
     /**
-     * TC-GET-001: Mengambil daftar tiket aktif dengan berbagai opsi pengurutan (data-driven).
+     * TC-GET-001: Retrieves the list of active tickets with various sort options (data-driven).
      */
     @Test(priority = 1,
           dataProvider = "activeTicketOrderData",
           dataProviderClass = TicketDataProvider.class,
-          description = "Mengambil tiket aktif dengan berbagai opsi urutan")
+          description = "Retrieve active tickets with various sort options")
     public void testGetActiveTicketsWithOrder(String order, String scenario) {
-        System.out.println("[INFO] Skenario: " + scenario + " | Order: " + order);
+        System.out.println("[INFO] Scenario: " + scenario + " | Order: " + order);
 
         Response response = authRequest()
                 .queryParam("date", Utils.getCurrentDateTime())
@@ -30,21 +30,21 @@ public class GetTicketTest extends BaseApiTest {
                 .queryParam("search", "")
                 .get("/api/rest/activeTickets");
 
-        // Validasi status code
+        // Validate status code
         Assert.assertEquals(response.getStatusCode(), 200,
-                "Pengambilan tiket aktif harus berhasil untuk order: " + order);
+                "Retrieving active tickets must succeed for order: " + order);
 
-        // Validasi respons berupa array
+        // Validate response is an array
         Assert.assertNotNull(response.jsonPath().getList("$"),
-                "Respons harus berupa list tiket");
+                "Response must be a list of tickets");
 
-        System.out.println("[PASS] " + scenario + " | Jumlah tiket: " + response.jsonPath().getList("$").size());
+        System.out.println("[PASS] " + scenario + " | Ticket count: " + response.jsonPath().getList("$").size());
     }
 
     /**
-     * TC-GET-002: Mengambil daftar tiket milik pengguna yang sedang login.
+     * TC-GET-002: Retrieves the list of tickets belonging to the currently logged-in user.
      */
-    @Test(priority = 2, description = "Mengambil tiket milik user yang sedang login")
+    @Test(priority = 2, description = "Retrieve tickets belonging to the logged-in user")
     public void testGetMyTickets() {
         Response response = authRequest()
                 .queryParam("limit", 5)
@@ -54,40 +54,40 @@ public class GetTicketTest extends BaseApiTest {
                 .get("/api/rest/myTickets");
 
         Assert.assertEquals(response.getStatusCode(), 200,
-                "Pengambilan tiket saya harus berhasil");
+                "Retrieving my tickets must succeed");
         Assert.assertNotNull(response.jsonPath().getList("$"),
-                "Respons harus berupa list");
+                "Response must be a list");
 
-        System.out.println("[PASS] Jumlah tiket saya: " + response.jsonPath().getList("$").size());
+        System.out.println("[PASS] My ticket count: " + response.jsonPath().getList("$").size());
     }
 
     /**
-     * TC-GET-003: Mengambil tiket berdasarkan ID yang tersimpan dari pengujian sebelumnya.
+     * TC-GET-003: Retrieves a ticket by the ID saved from a previous test.
      */
-    @Test(priority = 3, description = "Mengambil tiket berdasarkan ID spesifik")
+    @Test(priority = 3, description = "Retrieve a ticket by a specific ID")
     public void testGetTicketById() {
-        // Baca ID tiket yang disimpan sebelumnya dari file JSON
+        // Read the ticket ID previously saved to the JSON file
         String ticketId = JsonFileManager.readValue(TICKET_ID_FILE, "ticketId");
-        System.out.println("[INFO] Mengambil tiket dengan ID: " + ticketId);
+        System.out.println("[INFO] Retrieving ticket with ID: " + ticketId);
 
         Response response = authRequest()
                 .queryParam("id", ticketId)
                 .get("/api/rest/ticketById");
 
         Assert.assertEquals(response.getStatusCode(), 200,
-                "Pengambilan tiket berdasarkan ID harus berhasil");
+                "Retrieving a ticket by ID must succeed");
 
-        // Validasi ID tiket di respons sesuai dengan yang dicari
+        // Validate the ticket ID in the response matches the one requested
         Assert.assertEquals(response.jsonPath().getString("id"), ticketId,
-                "ID tiket dalam respons harus sama dengan yang dicari");
+                "Ticket ID in the response must match the requested ID");
 
-        System.out.println("[PASS] Tiket ditemukan: " + response.jsonPath().getString("title"));
+        System.out.println("[PASS] Ticket found: " + response.jsonPath().getString("title"));
     }
 
     /**
-     * TC-GET-004: Menghitung jumlah tiket aktif.
+     * TC-GET-004: Counts the number of active tickets.
      */
-    @Test(priority = 4, description = "Menghitung jumlah tiket aktif")
+    @Test(priority = 4, description = "Count the number of active tickets")
     public void testCountActiveTickets() {
         Response response = authRequest()
                 .queryParam("date", Utils.getCurrentDateTime())
@@ -95,15 +95,15 @@ public class GetTicketTest extends BaseApiTest {
                 .get("/api/rest/countActiveTickets");
 
         Assert.assertEquals(response.getStatusCode(), 200,
-                "Penghitungan tiket aktif harus berhasil");
+                "Counting active tickets must succeed");
 
-        System.out.println("[PASS] Jumlah tiket aktif: " + response.asString());
+        System.out.println("[PASS] Active ticket count: " + response.asString());
     }
 
     /**
-     * TC-GET-005: Pencarian tiket aktif dengan kata kunci tertentu.
+     * TC-GET-005: Searches for active tickets using a specific keyword.
      */
-    @Test(priority = 5, description = "Mencari tiket aktif dengan kata kunci")
+    @Test(priority = 5, description = "Search for active tickets with a keyword")
     public void testSearchActiveTickets() {
         Response response = authRequest()
                 .queryParam("date", Utils.getCurrentDateTime())
@@ -112,8 +112,8 @@ public class GetTicketTest extends BaseApiTest {
                 .get("/api/rest/activeTickets");
 
         Assert.assertEquals(response.getStatusCode(), 200,
-                "Pencarian tiket harus berhasil");
+                "Ticket search must succeed");
 
-        System.out.println("[PASS] Hasil pencarian tiket 'Otomatis': " + response.jsonPath().getList("$").size() + " tiket");
+        System.out.println("[PASS] Search results for 'Otomatis': " + response.jsonPath().getList("$").size() + " tickets");
     }
 }

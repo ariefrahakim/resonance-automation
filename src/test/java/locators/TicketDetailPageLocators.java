@@ -3,7 +3,7 @@ package locators;
 import org.openqa.selenium.By;
 
 /**
- * Locator terpusat untuk halaman detail tiket (/ticket/[id]).
+ * Centralised locators for the ticket detail page (/ticket/[id]).
  */
 public class TicketDetailPageLocators {
     // Ticket info

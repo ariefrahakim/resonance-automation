@@ -34,18 +34,27 @@ public class CommonSteps {
     /**
      * Performs a full login. Credentials support ${configKey} placeholders.
      * Valid credentials come from config.properties via ${usernameOrEmailResonance} and ${passwordResonance}.
+     *
+     * Uses WebDriverWait (up to 15s) instead of Thread.sleep — CI runners are slower
+     * than local machines and a fixed 2s sleep causes flaky failures.
      */
     @Given("I am logged in as {string} with password {string}")
     public void iAmLoggedInAs(String username, String password) {
         loginPage.login(ConfigReader.resolve(username), ConfigReader.resolve(password));
-        sleep(2000);
+        loginPage.waitForLoginRedirect();
         Assert.assertFalse(loginPage.isOnLoginPage(),
                 "Login failed — still on the login page. URL: " + DriverManager.getDriver().getCurrentUrl());
     }
 
+    /**
+     * Clears all cookies and navigates to a neutral page so that subsequent navigation
+     * to protected routes triggers the app's authentication redirect.
+     * Deleting cookies alone is not enough on some Next.js apps — a page load is needed.
+     */
     @Given("I am not logged in")
     public void iAmNotLoggedIn() {
         DriverManager.getDriver().manage().deleteAllCookies();
+        DriverManager.getDriver().navigate().refresh();
     }
 
     @Given("I am on the history page")

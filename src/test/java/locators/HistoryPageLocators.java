@@ -3,36 +3,36 @@ package locators;
 import org.openqa.selenium.By;
 
 /**
- * Locator terpusat untuk halaman riwayat tiket (/history).
+ * Centralised locators for the ticket history page (/history).
  *
- * Prinsip pemilihan locator (dari paling stabil ke paling rapuh):
- *   1. By.id()           — paling stabil, langsung dari atribut id=""
- *   2. By.name()         — dari atribut name=""
- *   3. By.cssSelector()  — pakai href/atribut struktural, BUKAN class hash Chakra
- *   4. By.xpath()        — untuk teks atau relasi parent/child yang tidak bisa dengan CSS
+ * Locator selection principles (most stable to most fragile):
+ *   1. By.id()           — most stable; targets the id="" attribute directly
+ *   2. By.name()         — targets the name="" attribute
+ *   3. By.cssSelector()  — use href/structural attributes, NOT Chakra hash classes
+ *   4. By.xpath()        — for text content or parent/child relationships not expressible in CSS
  *
- * Hindari: class hash seperti css-n0wfye, css-1gu0mm2 — berubah tiap build.
+ * Avoid: hash classes like css-n0wfye, css-1gu0mm2 — they change on every build.
  */
 public class HistoryPageLocators {
 
     /**
-     * Daftar tiket: gunakan link yang mengarah ke /ticket/ — stabil karena berbasis href.
-     * Setiap tiket pasti memiliki link ke /ticket/{id}.
+     * Ticket list: anchors pointing to /ticket/ — stable because they are href-based.
+     * Every ticket always has a link to /ticket/{id}.
      */
     public static final By TICKET_LINKS     = By.cssSelector("a[href*='/ticket/']");
 
     /**
-     * Judul tiket: span pertama di dalam link tiket.
-     * XPath lebih tepat di sini karena CSS tidak bisa select anak pertama dari tipe span.
+     * Ticket title: the first span inside a ticket link.
+     * XPath is more precise here because CSS cannot select the first child of a specific type.
      */
     public static final By TICKET_TITLE     = By.xpath("//a[contains(@href,'/ticket/')]//span[1]");
 
     /**
-     * Kontainer tiket: parent dari link tiket. Gunakan XPath naik dari link.
+     * Ticket container: the parent element of a ticket link, navigated to via XPath.
      */
     public static final By TICKET_CONTAINER = By.xpath("//a[contains(@href,'/ticket/')]/parent::*");
 
-    // Kontrol halaman — stabil karena pakai id eksplisit
+    // Page controls — stable because they use explicit IDs
     public static final By BACK_DASHBOARD   = By.id("btn-dashboard");
     public static final By ITEMS_PER_PAGE   = By.id("select-items-per-page");
     public static final By PAGINATION_PREV  = By.id("btn-pagination-prev");
