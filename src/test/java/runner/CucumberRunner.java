@@ -23,7 +23,8 @@ import io.cucumber.testng.CucumberOptions;
         "pretty",
         "html:build/reports/cucumber/report.html",
         "json:build/reports/cucumber/report.json",
-        "junit:build/reports/cucumber/report.xml"
+        "junit:build/reports/cucumber/report.xml",
+        "io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm"
     },
     monochrome = true
 )
