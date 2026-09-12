@@ -61,7 +61,12 @@ public class TicketSteps {
     @When("I click Submit Ticket")
     public void iClickSubmitTicket() {
         newTicketPage.clickSubmit();
-        sleep(2000);
+        // Wait briefly for toast or redirect — don't sleep past the toast's display window
+        try {
+            new WebDriverWait(DriverManager.getDriver(), Duration.ofSeconds(3))
+                    .until(d -> !d.getCurrentUrl().contains("/new")
+                            || d.getPageSource().contains("chakra-alert"));
+        } catch (Exception ignored) { }
     }
 
     @Then("the ticket should be created successfully")

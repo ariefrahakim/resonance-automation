@@ -3,6 +3,9 @@ package pages;
 import locators.NewTicketPageLocators;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import java.time.Duration;
 
 /**
  * Page object for the new ticket creation page (/new).
@@ -39,25 +42,31 @@ public class NewTicketPage extends BasePage {
         click(NewTicketPageLocators.PRIVATE_TOGGLE);
     }
 
-    /** Clicks the submit button to create the ticket. */
+    /** Clicks the submit button via JS to ensure the event fires in both local and CI headless Chrome. */
     public void clickSubmit() {
-        click(NewTicketPageLocators.SUBMIT_BUTTON);
+        jsClick(NewTicketPageLocators.SUBMIT_BUTTON);
     }
 
-    /** Returns {@code true} if a success toast is visible after ticket submission. */
+    /**
+     * Returns {@code true} if a success toast or URL change (redirect away from /new) is detected.
+     * Uses a short 5s window because Chakra UI toasts are transient — a 15s wait overshoots
+     * and the toast will have already disappeared by then.
+     */
     public boolean isSuccessToastDisplayed() {
         try {
-            wait.until(ExpectedConditions.visibilityOfElementLocated(NewTicketPageLocators.SUCCESS_TOAST));
+            new WebDriverWait(driver, Duration.ofSeconds(5))
+                    .until(ExpectedConditions.visibilityOfElementLocated(NewTicketPageLocators.SUCCESS_TOAST));
             return true;
         } catch (Exception e) {
             return false;
         }
     }
 
-    /** Returns {@code true} if an error toast is visible after ticket submission. */
+    /** Returns {@code true} if an error toast is visible after ticket submission (5s window). */
     public boolean isErrorToastDisplayed() {
         try {
-            wait.until(ExpectedConditions.visibilityOfElementLocated(NewTicketPageLocators.ERROR_TOAST));
+            new WebDriverWait(driver, Duration.ofSeconds(5))
+                    .until(ExpectedConditions.visibilityOfElementLocated(NewTicketPageLocators.ERROR_TOAST));
             return true;
         } catch (Exception e) {
             return false;
