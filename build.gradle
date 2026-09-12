@@ -55,6 +55,7 @@ task apiTest(type: Test) {
         showStandardStreams = true
         events 'passed', 'skipped', 'failed'
     }
+    systemProperty 'allure.results.directory', 'build/allure-results'
     reports.html.outputLocation = file('build/reports/tests/api')
 }
 
@@ -67,6 +68,7 @@ task webTest(type: Test) {
         showStandardStreams = true
         events 'passed', 'skipped', 'failed'
     }
+    systemProperty 'allure.results.directory', 'build/allure-results'
     reports.html.outputLocation = file('build/reports/tests/web')
 }
 
